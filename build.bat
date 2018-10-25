@@ -1,10 +1,10 @@
 @echo OFF
 set commitMsg=temp-vanilla-files
 
-CALL update.bat -np
-CALL commit.bat
-CALL write.bat -np
-CALL cleanup.bat -np
+CALL scripts/update.bat -np
+CALL scripts/commit.bat
+CALL scripts/write.bat -np
+
 
 echo.
 echo Finished generating diff file!

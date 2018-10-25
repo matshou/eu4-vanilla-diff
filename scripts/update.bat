@@ -1,9 +1,10 @@
-@echo OFF
+@ECHO off
+for %%i in ("%~dp0..") do set "rootPath=%%~fi"
+set config=%rootPath%\vanilla.ini
 echo.
-set rootPath=%cd%
 
 :readini
-IF not EXIST "vanilla.ini" (
+IF not EXIST "%config%" (
 echo [Error] Missing configuration file, update your local repository.
 goto end
 )
@@ -12,7 +13,7 @@ set /p entry1=
 set /p gamePath=
 set /p entry2=
 set /p fileList=
-) < vanilla.ini
+) < "%config%"
 
 IF not "%entry1%"=="gamePath =" (
 echo [Error] Missing 'gamePath' entry in config file!

@@ -1,5 +1,9 @@
+@ECHO off&setlocal
+IF "%rootPath%"=="" (
+	for %%i in ("%~dp0..") do set "rootPath=%%~fi"
+)
 echo Writing diff to file...
-git diff --diff-filter=M master vanilla > vanilla.diff
+git diff --diff-filter=M master vanilla > "%rootPath%\vanilla.diff"
 
 IF not "%1"=="-np" (
 	echo Finished writing diff file!
