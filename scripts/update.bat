@@ -1,10 +1,11 @@
 @ECHO off
 for %%i in ("%~dp0..") do set "rootPath=%%~fi"
-set config=%rootPath%\vanilla.ini
+set config="%rootPath%\vanilla.ini"
+set updateLog="%rootPath%\update.log"
 echo.
 
 :readini
-IF not EXIST "%config%" (
+IF not EXIST %config% (
 	echo [Error] Missing configuration file, update your local repository.
 	goto end
 )
@@ -13,7 +14,7 @@ set /p entry1=
 set /p gamePath=
 set /p entry2=
 set /p fileList=
-) < "%config%"
+) < %config%
 
 IF not "%entry1%"=="gamePath =" (
 	echo [Error] Missing 'gamePath' entry in config file!
@@ -30,7 +31,7 @@ IF not "%entry2%"=="fileList =" (
 )
 
 :copyfiles
-echo. > update.log
+echo. > %updateLog%
 for %%a in (%fileList%) do ( CALL copy.bat %%a )
 
 :complete

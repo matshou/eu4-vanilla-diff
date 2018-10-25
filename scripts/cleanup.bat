@@ -1,4 +1,8 @@
-@echo OFF
+@ECHO off&setlocal
+IF "%rootPath%"=="" (
+	for %%i in ("%~dp0..") do set "rootPath=%%~fi"
+)
+set buildLog="%rootPath%\build.log"
 
 IF "%1"=="--no-reset" ( goto :clean )
 
@@ -16,7 +20,7 @@ goto start
 set /p input="Are you sure you want to continue? (y/n): "
 IF "%input%"=="y" (
 	echo.
-	copy NUL build.log
+	echo. > %buildLog%
 	goto start
 )
 IF "%input%"=="n" ( goto pause )
@@ -24,11 +28,11 @@ goto check
 
 :start
 echo Resetting repository head...
-git reset HEAD~ >> build.log
+git reset HEAD~ >> %buildLog%
 :clean
 echo Cleaning repository...
-git stash save --keep-index --include-untracked >> build.log
-git stash drop >> build.log
+git stash save --keep-index --include-untracked >> %buildLog%
+git stash drop >> %buildLog%
 
 IF not "%1"=="-np" (
 	echo Finished cleaning!

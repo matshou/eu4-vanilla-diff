@@ -1,4 +1,5 @@
 @ECHO off
+set buildLog="%rootPath%\build.log"
 
 IF NOT DEFINED commitMsg (
 	echo.
@@ -7,10 +8,10 @@ IF NOT DEFINED commitMsg (
 	goto end
 )
 
-git config --global core.safecrlf false > build.log
+git config --global core.safecrlf false > %buildLog%
 echo Adding file contents to index...
-git add * >> build.log
+git add * >> %buildLog%
 echo Recording changes to repository...
-git commit -m "%commitMsg%" >> build.log
+git commit -m "%commitMsg%" >> %buildLog%
 
 :end
