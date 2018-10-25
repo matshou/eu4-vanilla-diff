@@ -40,4 +40,5 @@ echo Operation log saved in 'output_log.txt'
 goto end
 
 :end
-pause
+IF "%1"=="" ( pause )
+IF "%1"=="-c" ( echo. )
