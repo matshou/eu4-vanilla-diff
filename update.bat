@@ -40,4 +40,4 @@ goto end
 
 :end
 echo.
-IF not "%1"=="-c" ( pause )
+IF not "%1"=="-np" ( pause )

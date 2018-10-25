@@ -25,7 +25,7 @@ echo Cleaning repository...
 git stash save --keep-index --include-untracked >> build.log
 git stash drop >> build.log
 
-IF not "%1"=="-c" (
+IF not "%1"=="-np" (
 	echo Finished cleaning!
 	goto pause
 )
