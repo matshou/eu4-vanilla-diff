@@ -1,0 +1,7 @@
+# Log files
+*.log
+
+# Project files
+vanilla.ini
+vanilla-copy.bat
+vanilla-update.bat
