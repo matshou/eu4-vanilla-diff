@@ -1,7 +1,7 @@
 # Output files
 *.log
 *.diff
-*.tmp
+clean.tmp
 
 # Project files
 vanilla.ini
