@@ -1,5 +1,6 @@
-# Log files
+# Output files
 *.log
+*.diff
 
 # Project files
 vanilla.ini
