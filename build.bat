@@ -1,14 +1,16 @@
 @echo OFF
-CALL vanilla-update.bat -c
-git config --global core.safecrlf false > generate-diff.log
+set commitMsg=temp-vanilla-files
+
+CALL update.bat -c
+git config --global core.safecrlf false > build.log
+CALL commit.bat
 echo Writing diff to file...
 git diff --diff-filter=M master vanilla > vanilla.diff
-echo Cleaning repository...
-git reset HEAD~ >> generate-diff.log
-git stash save --keep-index --include-untracked >> generate-diff.log
-git stash drop >> generate-diff.log
+CALL cleanup.bat -c
+
 echo.
 echo Finished generating diff file!
 echo See 'vanilla.diff'
 echo.
+
 pause

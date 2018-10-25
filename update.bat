@@ -3,7 +3,6 @@ echo.
 set rootPath=%cd%
 
 :readini
-
 IF not EXIST "vanilla.ini" (
 echo [Error] Missing configuration file, update your local repository.
 goto end
@@ -30,13 +29,13 @@ goto end
 )
 
 :copyfiles
-echo. > output_log.txt
-for %%a in (%fileList%) do ( CALL vanilla-copy.bat %%a )
+echo. > update.log
+for %%a in (%fileList%) do ( CALL copy.bat %%a )
 
 :complete
 echo.
 echo Completed copying vanilla files!
-echo Operation log saved in 'output_log.txt'
+echo Operation log saved in 'update.log'
 goto end
 
 :end
