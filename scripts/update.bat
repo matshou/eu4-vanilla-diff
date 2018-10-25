@@ -5,8 +5,8 @@ echo.
 
 :readini
 IF not EXIST "%config%" (
-echo [Error] Missing configuration file, update your local repository.
-goto end
+	echo [Error] Missing configuration file, update your local repository.
+	goto end
 )
 (
 set /p entry1=
@@ -16,17 +16,17 @@ set /p fileList=
 ) < "%config%"
 
 IF not "%entry1%"=="gamePath =" (
-echo [Error] Missing 'gamePath' entry in config file!
-goto end
+	echo [Error] Missing 'gamePath' entry in config file!
+	goto end
 )
 set gamePath=%gamePath:"=%
 IF not EXIST "%gamePath%\eu4.exe" (
-echo [Error] Invalid 'gamePath' entry in config file!
-goto end
+	echo [Error] Invalid 'gamePath' entry in config file!
+	goto end
 )
 IF not "%entry2%"=="fileList =" (
-echo [Error] Missing 'fileList' entry in configuration file!
-goto end
+	echo [Error] Missing 'fileList' entry in configuration file!
+	goto end
 )
 
 :copyfiles

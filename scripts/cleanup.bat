@@ -6,6 +6,7 @@ IF "%1"=="--no-reset" ( goto :clean )
 git log -1 --pretty=%%B > clean.tmp
 ( set /p commit= ) < clean.tmp
 IF not "%commit%"=="%commitMsg%" (
+	echo.
 	echo This script will drop your last commit and remove all untracked changes.
 	goto check
 )

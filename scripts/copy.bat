@@ -1,10 +1,10 @@
 @echo OFF
 
 IF "%1"=="" (
-echo.
-echo Invalid argument, run update script.
-echo.
-goto end
+	echo.
+	echo Invalid argument, run update script.
+	echo.
+	goto end
 )
 
 set targetDir=%1
