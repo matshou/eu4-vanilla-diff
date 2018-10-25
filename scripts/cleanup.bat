@@ -40,4 +40,6 @@ echo.
 pause
 
 :end
+IF exist "clean.tmp" (
 del clean.tmp
+)
