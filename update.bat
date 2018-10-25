@@ -36,7 +36,6 @@ for %%a in (%fileList%) do ( CALL copy.bat %%a )
 echo.
 echo Completed copying vanilla files!
 echo Operation log saved in 'update.log'
-goto end
 
 :end
 echo.

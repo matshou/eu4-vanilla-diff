@@ -34,7 +34,6 @@ goto end
 :pause
 echo.
 pause
-goto end
 
 :end
 del clean.tmp
