@@ -59,11 +59,14 @@ IF not EXIST %config% ( call :CTError 1 )
 (
 set /p entry1=
 set /p gamePath=
+set /p entry2=
+set /p txtFiles=
 ) < %config%
 
 IF not "%entry1%"=="gamePath =" ( call :CTError 2 gamePath )
 set gamePath=%gamePath:"=%
 IF not EXIST "%gamePath%\eu4.exe" ( call :CTError 3 gamePath )
+IF not "%entry2%"=="txtFiles =" ( call :CTError 2 txtFiles )
 exit /b
 
 :copyFiles
