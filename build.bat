@@ -10,14 +10,13 @@ set updateLog="update.log"
 set buildLog="build.log"
 set installLog="install.log"
 
-git diff HEAD > diff.tmp
-for /f %%i in ("diff.tmp") do set size=%%~zi
+git diff HEAD > build.tmp
+for /f %%i in ("build.tmp") do set size=%%~zi
 IF %size% gtr 0 (
 	echo Stashing changes in working directory...
 	git add %this% >> %buildLog%
 	git stash save --keep-index >> %buildLog%
 )
-del diff.tmp
 
 :run
 call :install
@@ -81,13 +80,12 @@ copy NUL files.diff >> %buildLog%
 echo.
 echo. > %updateLog%
 for /F "usebackq tokens=*" %%a in (master.diff) do (
-	echo %%a > diff.tmp
-	call jrepl "\\(.*(?:\\))?" " " /f "diff.tmp" /o -
-	for /F "usebackq tokens=*" %%b in (diff.tmp) do (
+	echo %%a > build.tmp
+	call jrepl "\\(.*(?:\\))?" " " /f "build.tmp" /o -
+	for /F "usebackq tokens=*" %%b in (build.tmp) do (
 		call :CopyFile %%b %%a
 	)
 )
-del diff.tmp
 echo.
 echo Completed copying vanilla files!
 echo Operation log saved in 'update.log'
@@ -136,6 +134,7 @@ IF "%curHEAD%"=="%newHEAD%" (
 ) else (
 	call :Error 4
 )
+del build.tmp
 exit /b
 
 :CopyFile <path>
@@ -144,10 +143,10 @@ set filename=%2
 set filePath=%3
 
 :: Get file path without filename
-echo %filePath% > diff2.tmp
-call jrepl "\\(?:[^\\](?!\\))+$" "" /f "diff2.tmp" /o -
-( set /p filePath= ) < diff2.tmp
-del diff2.tmp
+echo %filePath% > build.tmp
+call jrepl "\\(?:[^\\](?!\\))+$" "" /f "build.tmp" /o -
+( set /p filePath= ) < build.tmp
+del build.tmp
 
 IF not "%fileCategory%"=="%1" (
 	IF not "%fileDirName%"=="%filename%" (
