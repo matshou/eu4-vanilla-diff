@@ -101,7 +101,7 @@ for /F "usebackq tokens=*" %%a in (files.diff) do (
 exit /b
 
 :createCommit
-git config --global core.safecrlf false > %buildLog%
+git config --global core.safecrlf false >> %buildLog%
 
 echo Adding file contents to index...
 git add * >> %buildLog%
