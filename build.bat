@@ -66,7 +66,7 @@ call :FindReplace "/" "\" names.diff
 
 echo Trimming trailing space...
 for /F "usebackq tokens=*" %%A in (names.diff) do (
-	call jrepl "\s+$" "" /f "%rootPath%\%%A" /o - >> trim.log
+	call jrepl "\s+$" "" /f "%cd%\%%A" /o - >> trim.log
 )
 
 :writeDiff
