@@ -70,10 +70,26 @@ IF not EXIST "%gamePath%\eu4.exe" ( call :CTError 3 gamePath )
 exit /b
 
 :copyFiles
-echo Copy vanilla files from game directory:
+echo Creating list of files on master branch...
+git ls-tree -r master --name-only > master.diff
+call jrepl "(\/)" "\" /f "master.diff" /o -
+
+echo Preparing to copy files...
+
+set fileCategory=""
+IF exist files.diff del files.diff
+copy NUL files.diff
+
 echo.
 echo. > %updateLog%
-for %%a in (%fileList%) do ( CALL :CopyFile %%a )
+for /F "usebackq tokens=*" %%a in (master.diff) do (
+	echo %%a > diff.tmp
+	call jrepl "\\(.*(?:\\))?" " " /f "diff.tmp" /o -
+	for /F "usebackq tokens=*" %%b in (diff.tmp) do (
+		call :CopyFile %%b %%a
+	)
+)
+del diff.tmp
 echo.
 echo Completed copying vanilla files!
 echo Operation log saved in 'update.log'
@@ -108,17 +124,29 @@ git reset --hard HEAD~ >> %buildLog%
 git stash drop
 exit /b
 
-)
+:CopyFile <path>
+set fileDirName=%1
+set filename=%2
+set filePath=%3
 
-:CopyFile
-set targetDir=%1
-echo Copying %targetDir% files...
-set src=%gamePath%\%targetDir%
-set dest=%cd%\%targetDir%
-IF exist "%src%" (
-	robocopy /s "%src%" "%dest%" /IT >> %updateLog%
-) else (
-	call :Error 4 %targetDir%
+:: Get file path without filename
+echo %filePath% > diff2.tmp
+call jrepl "\\(?:[^\\](?!\\))+$" "" /f "diff2.tmp" /o -
+( set /p filePath= ) < diff2.tmp
+del diff2.tmp
+
+IF not "%fileCategory%"=="%1" (
+	IF not "%fileDirName%"=="%filename%" (
+		set fileCategory=%1
+		echo Copying "%1" files...
+	)
+)
+set src=%gamePath%\%filePath%
+set dest=%cd%\%filePath%
+IF exist "%src%\%filename%" (
+	robocopy "%src%" "%dest%" %filename% /IT >> %updateLog%
+	:: Fill list of copied file paths
+	echo %3 >> files.diff
 )
 exit /b
 
