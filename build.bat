@@ -29,8 +29,11 @@ IF "%1"=="--update" (
 call :trimFiles
 call :createCommit
 call :writeDiff
-call :cleanRepo
-
+IF "%1"=="--dirty" (
+	echo Skipping cleanup.
+) else (
+	call :cleanRepo
+)
 echo.
 echo Finished generating diff file!
 echo See 'vanilla.diff'
@@ -72,8 +75,8 @@ call jrepl "(\/)" "\" /f "master.diff" /o -
 echo Preparing to copy files...
 
 set fileCategory=""
-IF exist files.diff del files.diff
-copy NUL files.diff
+IF exist files.diff del files.diff >> %buildLog%
+copy NUL files.diff >> %buildLog%
 
 echo.
 echo. > %updateLog%
@@ -101,11 +104,22 @@ exit /b
 
 :createCommit
 git config --global core.safecrlf false > %buildLog%
+
 echo Adding file contents to index...
 git add * >> %buildLog%
 git reset -- %this% >> %buildLog%
+
+git rev-parse HEAD > build.tmp
+( set /p oldHEAD= ) < build.tmp
+
 echo Recording changes to repository...
 git commit -m "temp-vanilla-files" >> %buildLog%
+
+git rev-parse HEAD > build.tmp
+( set /p newHEAD= ) < build.tmp
+IF "%oldHEAD%"=="%newHEAD%" (
+	call :CTError 6
+)
 exit /b
 
 :writeDiff
@@ -114,10 +128,14 @@ git diff --diff-filter=M master vanilla > vanilla.diff
 exit /b
 
 :cleanRepo
-exit /b
-echo Cleaning repository...
-git reset --hard HEAD~ >> %buildLog%
-git stash drop
+git rev-parse HEAD > build.tmp
+( set /p curHEAD= ) < build.tmp
+IF "%curHEAD%"=="%newHEAD%" (
+	echo Cleaning repository...
+	git reset --keep HEAD~ >> %buildLog%
+) else (
+	call :Error 4
+)
 exit /b
 
 :CopyFile <path>
@@ -148,6 +166,10 @@ exit /b
 
 :Error <code> [<info>]
 
+IF "%1"=="4" (
+	echo Unexpected HEAD, something went wrong...
+	echo Skipping cleanup.
+)
 exit /b
 
 :CTError <code> [<info>]
@@ -163,6 +185,9 @@ IF "%1"=="3" (
 )
 IF "%1"=="5" (
 	echo Unable to install JREPL, read 'install.log' for more info.
+)
+IF "%1"=="6" (
+	echo Failed to commit changes, read 'build.log' for more info.
 )
 echo.
 echo Critical error occured, aborting operation!
