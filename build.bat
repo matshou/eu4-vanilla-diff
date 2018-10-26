@@ -1,5 +1,4 @@
 @ECHO off
-setlocal
 echo.
 
 :init
@@ -58,13 +57,9 @@ IF not EXIST %config% ( call :CTError 1 )
 (
 set /p entry1=
 set /p gamePath=
-set /p entry2=
-set /p fileList=
 ) < %config%
 
 IF not "%entry1%"=="gamePath =" ( call :CTError 2 gamePath )
-IF not "%entry2%"=="fileList =" ( call :CTError 2 fileList )
-
 set gamePath=%gamePath:"=%
 IF not EXIST "%gamePath%\eu4.exe" ( call :CTError 3 gamePath )
 exit /b
@@ -119,6 +114,7 @@ git diff --diff-filter=M master vanilla > vanilla.diff
 exit /b
 
 :cleanRepo
+exit /b
 echo Cleaning repository...
 git reset --hard HEAD~ >> %buildLog%
 git stash drop
@@ -152,9 +148,6 @@ exit /b
 
 :Error <code> [<info>]
 
-IF "%1"=="4" (
-	echo Unable to find %2 in game directory! >> error.log
-)
 exit /b
 
 :CTError <code> [<info>]
@@ -176,4 +169,3 @@ echo Critical error occured, aborting operation!
 
 :EOF
 pause
-exit /b
