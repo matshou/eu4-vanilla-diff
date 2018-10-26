@@ -15,6 +15,7 @@ for /f %%i in ("build.tmp") do set size=%%~zi
 IF %size% gtr 0 (
 	echo Stashing changes in working directory...
 	git add %this% >> %buildLog%
+	git add %config% >> %buildLog%
 	git stash save --keep-index >> %buildLog%
 )
 
@@ -109,6 +110,7 @@ git config --global core.safecrlf false >> %buildLog%
 echo Adding file contents to index...
 git add * >> %buildLog%
 git reset -- %this% >> %buildLog%
+git reset -- %config% >> %buildLog%
 
 git rev-parse HEAD > build.tmp
 ( set /p oldHEAD= ) < build.tmp
