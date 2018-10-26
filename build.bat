@@ -7,6 +7,21 @@ IF exist "error.log" del error.log
 set config="vanilla.ini"
 set updateLog="update.log"
 set buildLog="build.log"
+set installLog="install.log"
+
+:install
+IF not EXIST "JREPL.BAT" (
+	echo Regex text processor not found.
+	echo Downloading package...
+	powershell -Command "(New-Object Net.WebClient).DownloadFile('https://www.dostips.com/forum/download/file.php?id=390&sid=3bb47c363d95b5427d516ce1605df600', 'JREPL.zip')" > %installLog%
+	echo Extracting package...
+	7z e -aoa JREPL.zip >> %installLog%
+	del JREPL.zip >> %installLog%
+	IF not EXIST "JREPL.BAT" ( call :CTError 5 )
+	echo Finished installing JREPL.
+	del %installLog%
+	echo.
+)
 
 :readIni
 IF not EXIST %config% ( call :CTError 1 )
@@ -126,6 +141,9 @@ IF "%1"=="2" (
 )
 IF "%1"=="3" (
 	echo Invalid '%2' entry in config file!
+)
+IF "%1"=="5" (
+	echo Unable to install JREPL, read 'install.log' for more info.
 )
 echo.
 echo Critical error occured, aborting operation!
