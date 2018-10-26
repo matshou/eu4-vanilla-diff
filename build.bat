@@ -98,7 +98,7 @@ exit /b
 echo Trimming trailing space...
 for /F "usebackq tokens=*" %%a in (files.diff) do (
 	echo trim %%a >> %buildLog%
-	call jrepl "\s+$" "\n" /x /f "%cd%\%%a" /o -
+	call jrepl "\s+$" "" /x /f "%cd%\%%a" /o -
 )
 exit /b
 
