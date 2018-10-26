@@ -12,6 +12,9 @@ set installLog="install.log"
 :run
 call :readIni
 call :copyFiles
+IF "%1"=="--update" (
+	goto EOF
+)
 call :createCommit
 call :trimDiff
 call :writeDiff
