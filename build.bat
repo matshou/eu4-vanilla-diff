@@ -99,9 +99,20 @@ exit /b
 :trimFiles
 echo Trimming trailing space...
 for /F "usebackq tokens=*" %%a in (files.diff) do (
-	echo trim %%a >> %buildLog%
-	call jrepl "\s+$" "" /x /f "%cd%\%%a" /o -
+	call :trimFile %%a
 )
+exit /b
+
+:trimFile
+for %%b in (%txtFiles%) do (
+	IF "%~x1"=="%%b" (
+		echo trim %1 >> %buildLog%
+		call jrepl "\s+$" "" /x /f "%cd%\%1" /o -
+		goto nextFileEntry
+	)
+)
+echo skip %1 >> %buildLog%
+:nextFileEntry
 exit /b
 
 :createCommit
