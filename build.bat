@@ -79,13 +79,13 @@ exit /b
 
 :trimDiff
 echo Compiling a list of changed vanilla files...
-git diff --diff-filter=M --name-only master vanilla > names.diff
+git diff --diff-filter=M --name-only master vanilla > files.diff
 
 REM translate path separator from git(slash) to bash(backslash)
-call :FindReplace "/" "\" names.diff
+call :FindReplace "/" "\" files.diff
 
 echo Trimming trailing space...
-for /F "usebackq tokens=*" %%A in (names.diff) do (
+for /F "usebackq tokens=*" %%A in (files.diff) do (
 	echo Processing %%A >> %buildLog%
 	call jrepl "\s+$" "" /f "%cd%\%%A" /o - >> %buildLog%
 )
