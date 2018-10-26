@@ -4,12 +4,24 @@ echo.
 
 :init
 IF exist "error.log" del error.log
+
+set this=%~nx0
 set config="vanilla.ini"
 set updateLog="update.log"
 set buildLog="build.log"
 set installLog="install.log"
 
+git diff HEAD > diff.tmp
+for /f %%i in ("diff.tmp") do set size=%%~zi
+IF %size% gtr 0 (
+	echo Stashing changes in working directory...
+	git add %this% >> %buildLog%
+	git stash save --keep-index >> %buildLog%
+)
+del diff.tmp
+
 :run
+call :install
 call :readIni
 call :copyFiles
 IF "%1"=="--update" (
@@ -39,6 +51,7 @@ IF not EXIST "JREPL.BAT" (
 	del %installLog%
 	echo.
 )
+exit /b
 
 :readIni
 IF not EXIST %config% ( call :CTError 1 )
@@ -73,6 +86,7 @@ echo.
 git config --global core.safecrlf false > %buildLog%
 echo Adding file contents to index...
 git add * >> %buildLog%
+git reset -- %this% >> %buildLog%
 echo Recording changes to repository...
 git commit -m "temp-vanilla-files" >> %buildLog%
 exit /b
@@ -99,6 +113,7 @@ exit /b
 :cleanRepo
 echo Cleaning repository...
 git reset --hard HEAD~ >> %buildLog%
+git stash drop
 exit /b
 
 )
