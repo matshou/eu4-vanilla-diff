@@ -27,8 +27,8 @@ call :copyFiles
 IF "%1"=="--update" (
 	goto EOF
 )
+call :trimFiles
 call :createCommit
-call :trimDiff
 call :writeDiff
 call :cleanRepo
 
@@ -80,29 +80,21 @@ echo Operation log saved in 'update.log'
 echo.
 exit /b
 
+:trimFiles
+echo Trimming trailing space...
+for /F "usebackq tokens=*" %%a in (files.diff) do (
+	echo trim %%a >> %buildLog%
+	call jrepl "\s+$" "\n" /x /f "%cd%\%%a" /o -
+)
+exit /b
+
 :createCommit
-echo Prepare to create diff file:
-echo.
 git config --global core.safecrlf false > %buildLog%
 echo Adding file contents to index...
 git add * >> %buildLog%
 git reset -- %this% >> %buildLog%
 echo Recording changes to repository...
 git commit -m "temp-vanilla-files" >> %buildLog%
-exit /b
-
-:trimDiff
-echo Compiling a list of changed vanilla files...
-git diff --diff-filter=M --name-only master vanilla > files.diff
-
-:: translate path separator from git(slash) to bash(backslash)
-call jrepl "(\/)" "\" /f "files.diff" /o -
-
-echo Trimming trailing space...
-for /F "usebackq tokens=*" %%A in (files.diff) do (
-	echo Processing %%A >> %buildLog%
-	call jrepl "\s+$" "" /f "%cd%\%%A" /o - >> %buildLog%
-)
 exit /b
 
 :writeDiff
