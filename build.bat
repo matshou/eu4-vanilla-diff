@@ -2,12 +2,26 @@
 setlocal
 echo.
 
+:init
 IF exist "error.log" del error.log
-
 set config="vanilla.ini"
 set updateLog="update.log"
 set buildLog="build.log"
 set installLog="install.log"
+
+:run
+call :readIni
+call :copyFiles
+call :createCommit
+call :trimDiff
+call :writeDiff
+call :cleanRepo
+
+echo.
+echo Finished generating diff file!
+echo See 'vanilla.diff'
+echo.
+goto EOF
 
 :install
 IF not EXIST "JREPL.BAT" (
@@ -37,6 +51,7 @@ IF not "%entry2%"=="fileList =" ( call :CTError 2 fileList )
 
 set gamePath=%gamePath:"=%
 IF not EXIST "%gamePath%\eu4.exe" ( call :CTError 3 gamePath )
+exit /b
 
 :copyFiles
 echo Copy vanilla files from game directory:
@@ -47,6 +62,7 @@ echo.
 echo Completed copying vanilla files!
 echo Operation log saved in 'update.log'
 echo.
+exit /b
 
 :createCommit
 echo Prepare to create diff file:
@@ -56,6 +72,7 @@ echo Adding file contents to index...
 git add * >> %buildLog%
 echo Recording changes to repository...
 git commit -m "temp-vanilla-files" >> %buildLog%
+exit /b
 
 :trimDiff
 echo Compiling a list of changed vanilla files...
@@ -69,28 +86,17 @@ for /F "usebackq tokens=*" %%A in (names.diff) do (
 	echo Processing %%A >> %buildLog%
 	call jrepl "\s+$" "" /f "%cd%\%%A" /o - >> %buildLog%
 )
+exit /b
 
 :writeDiff
 echo Writing diff to file...
 git diff --diff-filter=M master vanilla > vanilla.diff
+exit /b
 
-:cleanRepo <arg>
-IF not "%1"=="--no-reset" (
-	echo Resetting repository head...
-	git reset HEAD~ >> %buildLog%
-)
+:cleanRepo
 echo Cleaning repository...
-git stash save --keep-index --include-untracked >> %buildLog%
-git stash drop >> %buildLog%
-
-:finish
-echo.
-echo Finished generating diff file!
-echo See 'vanilla.diff'
-echo.
-
-pause
-goto EOF
+git reset --hard HEAD~ >> %buildLog%
+exit /b
 
 :FindReplace <findstr> <replstr> <file>
 set tmp="%temp%\tmp.txt"
@@ -148,7 +154,7 @@ IF "%1"=="5" (
 )
 echo.
 echo Critical error occured, aborting operation!
-pause
-exit
 
 :EOF
+pause
+exit /b
