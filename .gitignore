@@ -4,6 +4,4 @@
 clean.tmp
 
 # Project files
-vanilla.ini
-vanilla-copy.bat
-vanilla-update.bat
+JREPL.BAT
