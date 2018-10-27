@@ -14,6 +14,7 @@ echo #   ^<command^> [--^<option^>]
 echo #
 echo # Options:
 echo #   dirty    - Skip repository cleanup
+echo #   no-update    - Don't update vanilla files
 echo #
 echo # Commands:
 echo #   generate - Generate a new vanilla diff file.
@@ -43,9 +44,16 @@ exit /b
 
 :run
 call :init
-call :copyFiles
+IF not "%option%"=="-no-update" (
+	call :copyFiles
+) else (
+	echo Skipping file update.
+)
 IF "%command%"=="update" (
 	goto input
+)
+IF "%option%"=="-no-update" (
+	call :noUpdate
 )
 call :trimFiles
 call :createCommit
@@ -59,6 +67,28 @@ echo.
 echo Finished generating diff file!
 echo See 'vanilla.diff'
 goto input
+
+:noUpdate
+git diff --diff-filter=M vanilla master > test.tmp
+for /f %%i in ("test.tmp") do set fileSize=%%~zi
+:: no vanilla files found in root dir
+IF not %fileSize% gtr 0 (
+	set fileSize=0
+	call :Error 7
+	set "answer="
+	call :Query "Do you wish to run an update?" answer
+	echo.
+	IF "!answer!"=="y" (
+		call :copyFiles
+		exit /b
+	)
+	IF "!answer!"=="n" (
+		echo Aborting operation.
+		goto input
+	)
+	call :CTError 8
+)
+exit /b
 
 :init
 IF exist "error.log" del error.log
@@ -242,11 +272,24 @@ IF exist "%src%\%filename%" (
 )
 exit /b
 
+:Query <text> <output>
+set "a="
+set /p a="%~1 (y/n): "
+set %2=%a%
+IF "%a%"=="y" ( exit /b )
+IF "%a%"=="n" ( exit /b )
+goto Query
+
 :Error <code> [<info>]
 
 IF "%1"=="4" (
 	echo Unexpected HEAD, something went wrong...
 	echo Skipping cleanup.
+)
+IF "%1"=="7" (
+	echo.
+	echo No vanilla files found in repository.
+	echo Either running with 'no-update' or something went wrong.
 )
 exit /b
 
@@ -266,6 +309,9 @@ IF "%1"=="5" (
 )
 IF "%1"=="6" (
 	echo Failed to commit changes, read 'build.log' for more info.
+)
+IF "%1"=="8" (
+	echo Unable to read user input.
 )
 echo.
 echo Critical error occured, aborting operation!
