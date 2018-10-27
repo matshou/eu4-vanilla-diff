@@ -1,6 +1,64 @@
 @ECHO off
 echo.
 
+:welcome
+echo # Welcome to vanilla-diff!
+echo # --------------------------
+echo # This script will help you generate a readable log of mod changes
+echo # that override vanilla files, called a diff file.
+echo #
+:help
+echo # Usage:
+echo #   ^<command^> [--^<option^>]
+echo #
+echo # Options:
+echo #   dirty    - Skip repository cleanup
+echo #
+echo # Commands:
+echo #   generate - Generate a new vanilla diff file.
+echo #   update   - Update vanilla files in root dir.
+echo #   quit     - Stop script and return to terminal.
+echo #   help     - Print list of commands and options.
+:input
+echo.
+set "input="
+set /p input="$ "
+call :readInput %input%
+echo.
+IF "%command%"=="" ( goto input )
+IF "%command%"=="generate" ( goto run )
+IF "%command%"=="update" ( goto run )
+IF "%command%"=="help" ( goto help )
+IF "%command%"=="quit" ( exit /b )
+
+echo Error: unknown command '%command%'
+echo Call 'help' to show a list of usable commands.
+goto input
+
+:readInput
+set command=%1
+set option=%2
+exit /b
+
+:run
+call :init
+call :copyFiles
+IF "%command%"=="update" (
+	goto input
+)
+call :trimFiles
+call :createCommit
+call :writeDiff
+IF "%option%"=="--dirty" (
+	echo Skipping cleanup.
+) else (
+	call :cleanRepo
+)
+echo.
+echo Finished generating diff file!
+echo See 'vanilla.diff'
+goto input
+
 :init
 IF exist "error.log" del error.log
 
@@ -29,27 +87,9 @@ IF %size% gtr 0 (
 	git diff HEAD > head.diff
 	echo stashed changed, see 'git.log'. >> %buildLog%
 )
-
-:run
 call :install
 call :readIni
-call :copyFiles
-IF "%1"=="--update" (
-	goto EOF
-)
-call :trimFiles
-call :createCommit
-call :writeDiff
-IF "%1"=="--dirty" (
-	echo Skipping cleanup.
-) else (
-	call :cleanRepo
-)
-echo.
-echo Finished generating diff file!
-echo See 'vanilla.diff'
-echo.
-goto EOF
+exit /b
 
 :install
 IF not EXIST "JREPL.BAT" (
@@ -112,7 +152,6 @@ for /F "usebackq tokens=*" %%a in (master.diff) do (
 echo.
 echo Completed copying vanilla files!
 echo Operation log saved in 'update.log'
-echo.
 exit /b
 
 :trimFiles
@@ -138,6 +177,7 @@ exit /b
 
 :createCommit
 echo. >> %buildLog%
+echo.
 echo Add file contents to index: >> %buildLog%
 git config --global core.safecrlf false >> %gitLog%
 echo Adding file contents to index...
