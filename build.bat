@@ -19,6 +19,7 @@ echo #
 echo # Commands:
 echo #   generate   - Generate a new vanilla diff file.
 echo #   update     - Update vanilla files in root dir.
+echo #   show       - Open diff or log file in terminal.
 echo #   quit       - Stop script and return to terminal.
 echo #   help       - Print list of commands and options.
 :input
@@ -30,6 +31,7 @@ IF "%command%"=="" ( goto input)
 echo.
 IF "%command%"=="generate" ( goto run )
 IF "%command%"=="update" ( goto run )
+IF "%command%"=="show" ( call :Show %option% )
 IF "%command%"=="help" ( goto help )
 IF "%command%"=="quit" ( exit /b )
 
@@ -275,6 +277,29 @@ IF exist "%src%\%filename%" (
 )
 exit /b
 
+:Show <file>
+IF "%1"=="" (
+	call :Error 11
+	goto input
+)
+set showFileExt=.log .diff
+for %%a in (%showFileExt%) do (
+	IF "%~x1"=="%%a" ( goto show-read )
+)
+call :Error 10 %1
+goto input
+:show-read
+IF not exist "%1" (
+	call :Error 9 %1
+	goto input
+)
+for /f "tokens=*" %%a in (%1) do (
+	IF "%%a"=="" (
+		echo.
+	) else ( echo %%a )
+)
+goto input
+
 :Query <text> <output>
 set "a="
 set /p a="%~1 (y/n): "
@@ -293,6 +318,16 @@ IF "%1"=="7" (
 	echo.
 	echo No vanilla files found in repository.
 	echo Either running with 'no-update' or something went wrong.
+)
+IF "%1"=="9" (
+	echo Unable to find file '%2' in root directory.
+)
+IF "%1"=="10" (
+	echo '%2' is not a valid log or diff file.
+)
+IF "%1"=="11" (
+	echo No file passed as argument.
+	echo Use command like this: show ^<file^>
 )
 exit /b
 
