@@ -13,7 +13,7 @@ echo # Usage:
 echo #   ^<command^> [--^<option^>]
 echo #
 echo # Options:
-echo #   dirty    - Skip repository cleanup
+echo #   keep-files   - Skip repository cleanup
 echo #   no-update    - Don't update vanilla files
 echo #
 echo # Commands:
@@ -53,12 +53,12 @@ IF "%command%"=="update" (
 	goto input
 )
 IF "%option%"=="-no-update" (
-	call :noUpdate
+	call :NoUpdate
 )
 call :trimFiles
 call :createCommit
 call :writeDiff
-IF "%option%"=="--dirty" (
+IF "%option%"=="-keep-files" (
 	echo Skipping cleanup.
 ) else (
 	call :cleanRepo
