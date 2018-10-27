@@ -26,12 +26,12 @@ echo.
 set "input="
 set /p input="$ "
 call :readInput %input%
-IF "%command%"=="quit" ( exit /b )
+IF "%command%"=="" ( goto input)
 echo.
-IF "%command%"=="" ( goto input )
 IF "%command%"=="generate" ( goto run )
 IF "%command%"=="update" ( goto run )
 IF "%command%"=="help" ( goto help )
+IF "%command%"=="quit" ( exit /b )
 
 echo Error: unknown command '%command%'
 echo Call 'help' to show a list of usable commands.
