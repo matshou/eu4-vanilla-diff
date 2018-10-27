@@ -9,14 +9,25 @@ set config="vanilla.ini"
 set updateLog="update.log"
 set buildLog="build.log"
 set installLog="install.log"
+set gitLog="git.log"
+
+echo. > %buildLog%
+echo Initialize process: >> %buildLog%
+echo config file = %config% >> %buildLog%
+echo update log = %updateLog% >> %buildLog%
+echo build log = %buildLog% >> %buildLog%
+echo install log = %installLog% >> %buildLog%
+echo git log = %gitLog% >> %buildLog%
 
 git diff HEAD > build.tmp
 for /f %%i in ("build.tmp") do set size=%%~zi
 IF %size% gtr 0 (
 	echo Stashing changes in working directory...
-	git add %this% >> %buildLog%
-	git add %config% >> %buildLog%
-	git stash save --keep-index >> %buildLog%
+	git add %this% > %gitLog%
+	git add %config% >> %gitLog%
+	git stash save --keep-index >> %gitLog%
+	git diff HEAD > head.diff
+	echo stashed changed, see 'git.log'. >> %buildLog%
 )
 
 :run
@@ -42,6 +53,8 @@ goto EOF
 
 :install
 IF not EXIST "JREPL.BAT" (
+	echo. >> %buildLog%
+	echo Install dependencies. >> %buildLog%
 	echo Regex text processor not found.
 	echo Downloading package...
 	powershell -Command "(New-Object Net.WebClient).DownloadFile('https://www.dostips.com/forum/download/file.php?id=390&sid=3bb47c363d95b5427d516ce1605df600', 'JREPL.zip')" > %installLog%
@@ -56,6 +69,8 @@ IF not EXIST "JREPL.BAT" (
 exit /b
 
 :readIni
+echo. >> %buildLog%
+echo Read configuration file: >> %buildLog%
 IF not EXIST %config% ( call :CTError 1 )
 (
 set /p entry1=
@@ -68,12 +83,16 @@ IF not "%entry1%"=="gamePath =" ( call :CTError 2 gamePath )
 set gamePath=%gamePath:"=%
 IF not EXIST "%gamePath%\eu4.exe" ( call :CTError 3 gamePath )
 IF not "%entry2%"=="txtFiles =" ( call :CTError 2 txtFiles )
+echo gamePath = %gamePath% >> %buildLog%
+echo txtFiles = %txtFiles% >> %buildLog%
 exit /b
 
 :copyFiles
+echo. >> %buildLog%
+echo Copy vanilla files: >> %buildLog%
 echo Creating list of files on master branch...
 git ls-tree -r master --name-only > master.diff
-call jrepl "(\/)" "\" /f "master.diff" /o -
+call jrepl "(\/)" "\" /f "master.diff" /o - >> %buildLog%
 
 echo Preparing to copy files...
 
@@ -85,7 +104,7 @@ echo.
 echo. > %updateLog%
 for /F "usebackq tokens=*" %%a in (master.diff) do (
 	echo %%a > build.tmp
-	call jrepl "\\(.*(?:\\))?" " " /f "build.tmp" /o -
+	call jrepl "\\(.*(?:\\))?" " " /f "build.tmp" /o - >> %buildLog%
 	for /F "usebackq tokens=*" %%b in (build.tmp) do (
 		call :CopyFile %%b %%a
 	)
@@ -97,6 +116,8 @@ echo.
 exit /b
 
 :trimFiles
+echo. >> %buildLog%
+echo Remove trailing space: >> %buildLog%
 echo Trimming trailing space...
 for /F "usebackq tokens=*" %%a in (files.diff) do (
 	call :trimFile %%a
@@ -107,7 +128,7 @@ exit /b
 for %%b in (%txtFiles%) do (
 	IF "%~x1"=="%%b" (
 		echo trim %1 >> %buildLog%
-		call jrepl "\s+$" "" /x /f "%cd%\%1" /o -
+		call jrepl "\s+$" "" /x /f "%cd%\%1" /o - >> %buildLog%
 		goto nextFileEntry
 	)
 )
@@ -116,18 +137,19 @@ echo skip %1 >> %buildLog%
 exit /b
 
 :createCommit
-git config --global core.safecrlf false >> %buildLog%
-
+echo. >> %buildLog%
+echo Add file contents to index: >> %buildLog%
+git config --global core.safecrlf false >> %gitLog%
 echo Adding file contents to index...
-git add * >> %buildLog%
-git reset -- %this% >> %buildLog%
-git reset -- %config% >> %buildLog%
+git add * >> %gitLog%
+git reset -- %this% >> %gitLog%
+git reset -- %config% >> %gitLog%
 
 git rev-parse HEAD > build.tmp
 ( set /p oldHEAD= ) < build.tmp
 
 echo Recording changes to repository...
-git commit -m "temp-vanilla-files" >> %buildLog%
+git commit -m "temp-vanilla-files" >> %gitLog%
 
 git rev-parse HEAD > build.tmp
 ( set /p newHEAD= ) < build.tmp
@@ -137,16 +159,20 @@ IF "%oldHEAD%"=="%newHEAD%" (
 exit /b
 
 :writeDiff
+echo. >> %buildLog%
+echo Generate diff file: >> %buildLog%
 echo Writing diff to file...
-git diff --diff-filter=M master vanilla > vanilla.diff
+git diff --diff-filter=M vanilla master > vanilla.diff
 exit /b
 
 :cleanRepo
+echo. >> %buildLog%
+echo Clean repository: >> %buildLog%
 git rev-parse HEAD > build.tmp
 ( set /p curHEAD= ) < build.tmp
 IF "%curHEAD%"=="%newHEAD%" (
 	echo Cleaning repository...
-	git reset --keep HEAD~ >> %buildLog%
+	git reset --keep HEAD~ >> %gitLog%
 ) else (
 	call :Error 4
 )
@@ -168,6 +194,7 @@ IF not "%fileCategory%"=="%1" (
 set src=%gamePath%\%filePath%
 set dest=%cd%\%filePath%
 IF exist "%src%\%filename%" (
+	echo copy %3 >> %buildLog%
 	robocopy "%src%" "%dest%" %filename% /IT >> %updateLog%
 	:: Fill list of copied file paths
 	echo %3 >> files.diff
