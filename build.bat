@@ -1,4 +1,5 @@
 @ECHO off
+setlocal enabledelayedexpansion
 echo.
 
 :welcome
