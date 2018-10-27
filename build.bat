@@ -77,7 +77,7 @@ call jrepl "(\/)" "\" /f "master.diff" /o -
 
 echo Preparing to copy files...
 
-set fileCategory=""
+set fileCategory=
 IF exist files.diff del files.diff >> %buildLog%
 copy NUL files.diff >> %buildLog%
 
@@ -157,12 +157,7 @@ exit /b
 set fileDirName=%1
 set filename=%2
 set filePath=%3
-
-:: Get file path without filename
-echo %filePath% > build.tmp
-call jrepl "\\(?:[^\\](?!\\))+$" "" /f "build.tmp" /o -
-( set /p filePath= ) < build.tmp
-del build.tmp
+call set filePath=%%filePath:\%filename%=%%
 
 IF not "%fileCategory%"=="%1" (
 	IF not "%fileDirName%"=="%filename%" (
