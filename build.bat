@@ -17,21 +17,21 @@ echo #   keep-files   - Skip repository cleanup
 echo #   no-update    - Don't update vanilla files
 echo #
 echo # Commands:
-echo #   generate - Generate a new vanilla diff file.
-echo #   update   - Update vanilla files in root dir.
-echo #   quit     - Stop script and return to terminal.
-echo #   help     - Print list of commands and options.
+echo #   generate   - Generate a new vanilla diff file.
+echo #   update     - Update vanilla files in root dir.
+echo #   quit       - Stop script and return to terminal.
+echo #   help       - Print list of commands and options.
 :input
 echo.
 set "input="
 set /p input="$ "
 call :readInput %input%
+IF "%command%"=="quit" ( exit /b )
 echo.
 IF "%command%"=="" ( goto input )
 IF "%command%"=="generate" ( goto run )
 IF "%command%"=="update" ( goto run )
 IF "%command%"=="help" ( goto help )
-IF "%command%"=="quit" ( exit /b )
 
 echo Error: unknown command '%command%'
 echo Call 'help' to show a list of usable commands.
@@ -68,30 +68,10 @@ echo Finished generating diff file!
 echo See 'vanilla.diff'
 goto input
 
-:noUpdate
-git diff --diff-filter=M vanilla master > test.tmp
-for /f %%i in ("test.tmp") do set fileSize=%%~zi
-:: no vanilla files found in root dir
-IF not %fileSize% gtr 0 (
-	set fileSize=0
-	call :Error 7
-	set "answer="
-	call :Query "Do you wish to run an update?" answer
-	echo.
-	IF "!answer!"=="y" (
-		call :copyFiles
-		exit /b
-	)
-	IF "!answer!"=="n" (
-		echo Aborting operation.
-		goto input
-	)
-	call :CTError 8
-)
-exit /b
-
 :init
 IF exist "error.log" del error.log
+
+set fileSize=0
 
 set this=%~nx0
 set config="vanilla.ini"
@@ -109,14 +89,15 @@ echo install log = %installLog% >> %buildLog%
 echo git log = %gitLog% >> %buildLog%
 
 git diff HEAD > build.tmp
-for /f %%i in ("build.tmp") do set size=%%~zi
-IF %size% gtr 0 (
+for /f %%i in ("build.tmp") do set fileSize=%%~zi
+IF %fileSize% gtr 0 (
 	echo Stashing changes in working directory...
 	git add %this% > %gitLog%
 	git add %config% >> %gitLog%
 	git stash save --keep-index >> %gitLog%
 	git diff HEAD > head.diff
 	echo stashed changed, see 'git.log'. >> %buildLog%
+	set fileSize=0
 )
 call :install
 call :readIni
@@ -250,6 +231,28 @@ IF "%curHEAD%"=="%newHEAD%" (
 del build.tmp
 exit /b
 
+:NoUpdate
+git diff --diff-filter=M vanilla master > test.tmp
+for /f %%i in ("test.tmp") do set fileSize=%%~zi
+:: no vanilla files found in root dir
+IF not %fileSize% gtr 0 (
+	set fileSize=0
+	call :Error 7
+	set "answer="
+	call :Query "Do you wish to run an update?" answer
+	echo.
+	IF "!answer!"=="y" (
+		call :copyFiles
+		exit /b
+	)
+	IF "!answer!"=="n" (
+		echo Aborting operation.
+		goto input
+	)
+	call :CTError 8
+)
+exit /b
+
 :CopyFile <path>
 set fileDirName=%1
 set filename=%2
@@ -315,6 +318,7 @@ IF "%1"=="8" (
 )
 echo.
 echo Critical error occured, aborting operation!
+goto input
 
 :EOF
 pause
