@@ -249,14 +249,14 @@ git reset -- %this% >> %gitLog%
 git reset -- %config% >> %gitLog%
 
 git rev-parse HEAD > build.tmp
-( set /p oldHEAD= ) < build.tmp
+( set /p curHEAD= ) < build.tmp
 
 echo Recording changes to repository...
 git commit -m "temp-vanilla-files" >> %gitLog%
 
 git rev-parse HEAD > build.tmp
-( set /p newHEAD= ) < build.tmp
-IF "%oldHEAD%"=="%newHEAD%" (
+( set /p vanillaHEAD= ) < build.tmp
+IF "%curHEAD%"=="%vanillaHEAD%" (
 	call :CTError 6
 )
 exit /b
@@ -339,6 +339,7 @@ IF not "%fileCategory%"=="%1" (
 )
 set src=%gamePath%\%filePath%
 set dest=%cd%\%filePath%
+
 IF exist "%src%\%filename%" (
 	echo copy %3 >> %buildLog%
 	robocopy "%src%" "%dest%" %filename% /IT >> %updateLog%
