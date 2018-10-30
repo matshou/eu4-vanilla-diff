@@ -121,7 +121,17 @@ IF %fileSize% gtr 0 (
 	set fileSize=0
 )
 call :install
-call :readIni
+echo. >> %buildLog%
+echo Read configuration file: >> %buildLog%
+IF not EXIST %config% ( call :CTError 1 )
+for /F "usebackq tokens=*" %%a in (%config%) do (
+	call :ReadConfig %%a
+)
+IF not EXIST "%gamePath%\eu4.exe" (
+	echo Couldn't find 'eu4.exe' in %gamePath%.
+	echo Make sure that 'gamePath' entry in 'vanilla.ini' points to game directory.
+	call :CTError
+)
 exit /b
 
 :install
@@ -140,25 +150,6 @@ IF not EXIST "JREPL.BAT" (
 	del %installLog%
 	echo.
 )
-exit /b
-
-:readIni
-echo. >> %buildLog%
-echo Read configuration file: >> %buildLog%
-IF not EXIST %config% ( call :CTError 1 )
-(
-set /p entry1=
-set /p gamePath=
-set /p entry2=
-set /p txtFiles=
-) < %config%
-
-IF not "%entry1%"=="gamePath =" ( call :CTError 2 gamePath )
-set gamePath=%gamePath:"=%
-IF not EXIST "%gamePath%\eu4.exe" ( call :CTError 3 gamePath )
-IF not "%entry2%"=="txtFiles =" ( call :CTError 2 txtFiles )
-echo gamePath = %gamePath% >> %buildLog%
-echo txtFiles = %txtFiles% >> %buildLog%
 exit /b
 
 :copyFiles
@@ -294,6 +285,24 @@ IF "%curHead%"=="%masterHEAD%" (
 )
 git checkout vanilla >> %gitLog%
 RMDIR /s /q temp
+exit /b
+
+:ReadConfig <entry> <value>
+FOR /F "tokens=1-2 delims==" %%I IN ("%*") DO (
+	set value=%%~J
+	IF "%%I"=="txtFiles" (
+		call :ParseConfigValue "%%J" value
+	)
+	set %%I=!value!
+	echo %%I = %%J >> %buildLog%
+)
+exit /b
+
+:ParseConfigValue
+set values=%~1
+call jrepl "," " " /s values > %build_tmp%
+( set /p values= ) < %build_tmp%
+set %2=%values%
 exit /b
 
 :GetNewTmp <type>
