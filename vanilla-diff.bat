@@ -381,8 +381,8 @@ goto Query
 :Error <code> [<info>]
 
 IF "%1"=="4" (
-	echo Unexpected HEAD, something went wrong...
-	echo Skipping cleanup.
+	echo Unexpected HEAD (%2), expected (%3).
+	echo Something went wrong, skipping cleanup.
 )
 IF "%1"=="7" (
 	echo.
