@@ -11,6 +11,9 @@ IF not "%~nx0"=="%tmpScript%" (
 	exit /b
 )
 
+call :init
+echo.
+
 :test
 REM place test code here
 REM pause
@@ -32,7 +35,7 @@ echo #   no-update    - Don't update vanilla files
 echo #
 echo # Commands:
 echo #   generate   - Generate a new vanilla diff file.
-echo #   update     - Update vanilla files in root dir.
+echo #   update     - Update application from remote repo.
 echo #   show       - Open diff or log file in terminal.
 echo #   quit       - Stop script and return to terminal.
 echo #   help       - Print list of commands and options.
@@ -44,10 +47,15 @@ call :readInput %input%
 IF "%command%"=="" ( goto input)
 echo.
 IF "%command%"=="generate" ( goto run )
-IF "%command%"=="update" ( goto run )
 IF "%command%"=="show" ( call :Show %option% )
 IF "%command%"=="help" ( goto help )
 IF "%command%"=="quit" ( exit /b )
+
+IF "%command%"=="update" (
+	echo Updating vanilla-diff...
+	git pull !repoURL!
+	goto input
+)
 
 echo Error: unknown command '%command%'
 echo Call 'help' to show a list of usable commands.
@@ -59,14 +67,10 @@ set option=%2
 exit /b
 
 :run
-call :init
 IF not "%option%"=="-no-update" (
 	call :copyFiles
 ) else (
 	echo Skipping file update.
-)
-IF "%command%"=="update" (
-	goto input
 )
 IF "%option%"=="-no-update" (
 	call :NoUpdate
