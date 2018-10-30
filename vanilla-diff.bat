@@ -168,7 +168,7 @@ git ls-tree -r master --name-only > master.diff
 call jrepl "(\/)" "\" /f "master.diff" /o - >> %buildLog%
 
 echo Adding localisation overrides to list...
-@git checkout master >> %gitLog%
+@git checkout master --quiet >> %gitLog%
 @copy NUL replace.diff > nul
 for /r . %%a in (localisation\replace\*) do (
 	echo localisation\%%~nxa >> master.diff
@@ -178,7 +178,7 @@ for /r . %%a in (localisation\replace\*) do (
 set fileCategory=null
 IF exist files.diff del files.diff >> %buildLog%
 @copy NUL files.diff > nul
-
+echo.
 echo Copying override localisation files...
 for /F "usebackq tokens=*" %%a in (replace.diff) do (
 	call :CopyFile null %%~na%%~xa %%a
@@ -201,7 +201,7 @@ echo Recording changes to repository...
 git commit -m "temp-localisation-replace" >> %gitLog%
 git rev-parse HEAD > %build_tmp%
 ( set /p masterHEAD= ) < %build_tmp%
-@git checkout vanilla >> %gitLog%
+@git checkout vanilla --quiet >> %gitLog%
 
 echo.
 echo. > %updateLog%
@@ -280,7 +280,7 @@ IF "%curHEAD%"=="%vanillaHEAD%" (
 ) else (
 	call :Error 4 %curHEAD% %vanillaHEAD%
 )
-git checkout master >> %gitLog%
+git checkout master --quiet >> %gitLog%
 git rev-parse HEAD > %build_tmp%
 ( set /p curHEAD= ) < %build_tmp%
 IF "%curHead%"=="%masterHEAD%" (
@@ -289,7 +289,7 @@ IF "%curHead%"=="%masterHEAD%" (
 ) else (
 	call :Error 4 %currHEAD% %masterHEAD%
 )
-git checkout vanilla >> %gitLog%
+git checkout vanilla --quiet >> %gitLog%
 RMDIR /s /q temp
 exit /b
 
