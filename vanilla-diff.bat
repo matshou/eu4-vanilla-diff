@@ -7,6 +7,7 @@ set tmpScript=script.bat
 IF not "%~nx0"=="%tmpScript%" (
 	@copy /b/v/y %~nx0 %tmpScript% > nul
 	call %tmpScript%
+	@del %tmpScript%
 	exit /b
 )
 
