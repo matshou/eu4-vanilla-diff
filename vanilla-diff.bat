@@ -5,7 +5,7 @@ echo.
 set tmpScript=script.bat
 :: used when switching git branches
 IF not "%~nx0"=="%tmpScript%" (
-	copy /b/v/y %~nx0 %tmpScript%
+	@copy /b/v/y %~nx0 %tmpScript% > nul
 	call %tmpScript%
 	exit /b
 )
@@ -128,9 +128,10 @@ IF not EXIST "JREPL.BAT" (
 	echo. >> %buildLog%
 	echo Install dependencies. >> %buildLog%
 	echo Regex text processor not found.
-	echo Downloading package...
+	echo Downloading and installing...
+	echo download jrepl >> %buildLog%
 	powershell -Command "(New-Object Net.WebClient).DownloadFile('https://www.dostips.com/forum/download/file.php?id=390&sid=3bb47c363d95b5427d516ce1605df600', 'JREPL.zip')" > %installLog%
-	echo Extracting package...
+	echo extract package >> %buildLog%
 	7z e -aoa JREPL.zip >> %installLog%
 	del JREPL.zip >> %installLog%
 	IF not EXIST "JREPL.BAT" ( call :CTError 5 )
@@ -170,7 +171,7 @@ call jrepl "(\/)" "\" /f "master.diff" /o - >> %buildLog%
 
 echo Adding localisation overrides to list...
 @git checkout master >> %gitLog%
-copy NUL replace.diff >> %buildLog%
+@copy NUL replace.diff > nul
 for /r . %%a in (localisation\replace\*) do (
 	echo localisation\%%~nxa >> master.diff
 	echo localisation\%%~nxa >> replace.diff
@@ -178,7 +179,7 @@ for /r . %%a in (localisation\replace\*) do (
 
 set fileCategory=null
 IF exist files.diff del files.diff >> %buildLog%
-copy NUL files.diff >> %buildLog%
+@copy NUL files.diff > nul
 
 echo Copying override localisation files...
 for /F "usebackq tokens=*" %%a in (replace.diff) do (
