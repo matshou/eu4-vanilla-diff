@@ -10,6 +10,11 @@ IF not "%~nx0"=="%tmpScript%" (
 	exit /b
 )
 
+:test
+REM place test code here
+REM pause
+REM exit/b
+
 :welcome
 echo # Welcome to vanilla-diff!
 echo # --------------------------
