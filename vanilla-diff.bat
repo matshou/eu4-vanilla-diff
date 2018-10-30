@@ -89,6 +89,7 @@ echo See 'vanilla.diff'
 goto input
 
 :init
+echo Initializing application...
 IF exist "error.log" del error.log
 IF NOT exist temp\ ( mkdir temp )
 
@@ -126,6 +127,7 @@ IF %fileSize% gtr 0 (
 )
 call :install
 echo. >> %buildLog%
+echo Loading configuration values...
 echo Read configuration file: >> %buildLog%
 IF not EXIST %config% ( call :CTError 1 )
 for /F "usebackq tokens=*" %%a in (%config%) do (
