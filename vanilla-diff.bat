@@ -175,7 +175,9 @@ git ls-tree -r master --name-only > master.diff
 call jrepl "(\/)" "\" /f "master.diff" /o - >> %buildLog%
 
 echo Adding localisation overrides to list...
-@git checkout master --quiet >> %gitLog%
+
+call :Checkout master
+
 @copy NUL replace.diff > nul
 for /r . %%a in (localisation\replace\*) do (
 	echo localisation\%%~nxa >> master.diff
@@ -208,7 +210,8 @@ echo Recording changes to repository...
 git commit -m "temp-localisation-replace" >> %gitLog%
 git rev-parse HEAD > %build_tmp%
 ( set /p masterHEAD= ) < %build_tmp%
-@git checkout vanilla --quiet >> %gitLog%
+
+call :Checkout vanilla
 
 echo.
 echo. > %updateLog%
@@ -286,7 +289,7 @@ IF "%curHEAD%"=="%vanillaHEAD%" (
 ) else (
 	call :Error 4 %curHEAD% %vanillaHEAD%
 )
-git checkout master --quiet >> %gitLog%
+call :Checkout master
 git rev-parse HEAD > %build_tmp%
 ( set /p curHEAD= ) < %build_tmp%
 IF "%curHEAD%"=="%masterHEAD%" (
@@ -295,8 +298,18 @@ IF "%curHEAD%"=="%masterHEAD%" (
 ) else (
 	call :Error 4 %currHEAD% %masterHEAD%
 )
-git checkout vanilla --quiet >> %gitLog%
+call :Checkout vanilla
 RMDIR /s /q temp
+exit /b
+
+:Checkout <branch>
+IF "%1"=="vanilla" (
+	@git checkout vanilla --quiet >> %gitLog%
+	git stash pop >> %gitLog%
+) else (
+	git stash save "vanilla-diff checkout:%1" >> %gitLog%
+	@git checkout %1 --quiet >> %gitLog%
+)
 exit /b
 
 :ReadConfig <entry> <value>
