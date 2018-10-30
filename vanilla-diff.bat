@@ -251,7 +251,7 @@ echo.
 echo Add file contents to index: >> %buildLog%
 echo Adding file contents to index...
 git add * >> %gitLog%
-git reset -- %this% >> %gitLog%
+git reset -- %vanillaDiff% >> %gitLog%
 git reset -- %config% >> %gitLog%
 
 git rev-parse HEAD > %build_tmp%
@@ -289,7 +289,7 @@ IF "%curHEAD%"=="%vanillaHEAD%" (
 git checkout master --quiet >> %gitLog%
 git rev-parse HEAD > %build_tmp%
 ( set /p curHEAD= ) < %build_tmp%
-IF "%curHead%"=="%masterHEAD%" (
+IF "%curHEAD%"=="%masterHEAD%" (
 	git reset --keep HEAD~ >> %gitLog%
 
 ) else (
