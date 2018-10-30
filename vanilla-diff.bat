@@ -194,7 +194,7 @@ for /r . %%a in (localisation\replace\*) do (
 	)
 )
 echo Applying overrides to localisation...
-start E:\Programs\Git\git-bash.exe -i -c "bash override.sh"
+start /wait E:\Programs\Git\git-bash.exe -i -c "bash override.sh"
 
 echo Adding localisation changes to index...
 for /F "usebackq tokens=*" %%a in (replace.diff) do (
