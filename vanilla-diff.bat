@@ -274,7 +274,11 @@ exit /b
 echo. >> %buildLog%
 echo Generate diff file: >> %buildLog%
 echo Writing diff to file...
-git diff --diff-filter=M vanilla master > vanilla.diff
+for /F "usebackq tokens=*" %%a in (.diffignore) do (
+	set "exclude=!exclude! ^':^(exclude^)%%a^'"
+)
+echo git diff --diff-filter=M vanilla master %exclude% ^> vanilla.diff > diff.sh
+call :RunShellScript "bash diff.sh"
 exit /b
 
 :cleanRepo
@@ -300,6 +304,11 @@ IF "%curHEAD%"=="%masterHEAD%" (
 )
 call :Checkout vanilla
 RMDIR /s /q temp
+del override.sh
+exit /b
+
+:RunShellScript <command>
+start /wait %gitBashPath% -i -c %1
 exit /b
 
 :Checkout <branch>
