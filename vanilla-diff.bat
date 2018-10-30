@@ -144,15 +144,51 @@ exit /b
 :copyFiles
 echo. >> %buildLog%
 echo Copy vanilla files: >> %buildLog%
+echo Preparing to copy files...
+
 echo Creating list of files on master branch...
 git ls-tree -r master --name-only > master.diff
 call jrepl "(\/)" "\" /f "master.diff" /o - >> %buildLog%
 
-echo Preparing to copy files...
+echo Adding localisation overrides to list...
+@git checkout master >> %gitLog%
+copy NUL replace.diff >> %buildLog%
+for /r . %%a in (localisation\replace\*) do (
+	echo localisation\%%~nxa >> master.diff
+	echo localisation\%%~nxa >> replace.diff
+)
 
-set fileCategory=
+set fileCategory=null
 IF exist files.diff del files.diff >> %buildLog%
 copy NUL files.diff >> %buildLog%
+
+echo Copying override localisation files...
+for /F "usebackq tokens=*" %%a in (replace.diff) do (
+	call :CopyFile null %%~na%%~xa %%a
+)
+echo Creating override shell script...
+IF NOT exist temp\ ( mkdir temp )
+set /a c=0
+for /r . %%a in (localisation\replace\*) do (
+	echo override localisation: %%a >> %buildLog%
+	for /f "tokens=*" %%b in (localisation\replace\%%~na%%~xa) do (
+		set /a c=c+1
+		echo. %%b> temp\override!c!.tmp
+		call :AddOverrideToSH %%b "localisation\%%~na%%~xa"
+	)
+)
+echo Applying overrides to localisation...
+start E:\Programs\Git\git-bash.exe -i -c "bash override.sh"
+
+echo Adding localisation changes to index...
+for /F "usebackq tokens=*" %%a in (replace.diff) do (
+	git add %%a >> %gitLog%
+)
+echo Recording changes to repository...
+git commit -m "temp-localisation-replace" >> %gitLog%
+git rev-parse HEAD > build.tmp
+( set /p masterHEAD= ) < build.tmp
+@git checkout vanilla >> %gitLog%
 
 echo.
 echo. > %updateLog%
@@ -222,14 +258,26 @@ exit /b
 :cleanRepo
 echo. >> %buildLog%
 echo Clean repository: >> %buildLog%
+echo Cleaning repository...
 git rev-parse HEAD > build.tmp
 ( set /p curHEAD= ) < build.tmp
-IF "%curHEAD%"=="%newHEAD%" (
-	echo Cleaning repository...
+IF "%curHEAD%"=="%vanillaHEAD%" (
 	git reset --keep HEAD~ >> %gitLog%
+
 ) else (
-	call :Error 4
+	call :Error 4 %curHEAD% %vanillaHEAD%
 )
+git checkout master >> %gitLog%
+git rev-parse HEAD > build.tmp
+( set /p curHEAD= ) < build.tmp
+IF "%curHead%"=="%masterHEAD%" (
+	git reset --keep HEAD~ >> %gitLog%
+
+) else (
+	call :Error 4 %currHEAD% %masterHEAD%
+)
+git checkout vanilla >> %gitLog%
+RMDIR /s /q temp
 del build.tmp
 exit /b
 
@@ -253,6 +301,15 @@ IF not %fileSize% gtr 0 (
 	)
 	call :CTError 8
 )
+exit /b
+
+:AddOverrideToSH <key> <text> <file>
+
+set key=%1
+IF not x%key:l_english=%==x%key% ( exit /b )
+set "tf=temp\override!c!.tmp"
+set "awk='FNR==NR{s=s"\n"$0;next;} /%1 /{$0=substr(s,2);}"
+echo awk %awk% 1' "%tf%" %3 ^> build.tmp ^&^& mv build.tmp %3 >> override.sh
 exit /b
 
 :CopyFile <path>
