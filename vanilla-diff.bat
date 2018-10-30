@@ -2,6 +2,10 @@
 setlocal enabledelayedexpansion
 echo.
 
+:: set only for main script process
+IF not DEFINED vanillaDiff (
+	set vanillaDiff=%~nx0
+)
 set tmpScript=script.bat
 :: used when switching git branches
 IF not "%~nx0"=="%tmpScript%" (
@@ -99,7 +103,6 @@ set t2=0            rem build temp prefix
 
 call :GetNewTmp build
 
-set this=%~nx0
 set config="vanilla.ini"
 set updateLog="update.log"
 set buildLog="build.log"
@@ -118,7 +121,7 @@ git diff HEAD > %build_tmp%
 for /f %%i in ("%build_tmp%") do set fileSize=%%~zi
 IF %fileSize% gtr 0 (
 	echo Stashing changes in working directory...
-	git add %this% > %gitLog%
+	git add %vanillaDiff% > %gitLog%
 	git add %config% >> %gitLog%
 	git stash save --keep-index >> %gitLog%
 	git diff HEAD > head.diff
