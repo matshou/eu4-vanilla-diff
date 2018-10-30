@@ -85,8 +85,13 @@ goto input
 
 :init
 IF exist "error.log" del error.log
+IF NOT exist temp\ ( mkdir temp )
 
-set fileSize=0
+set fileSize=0      rem temp file size
+set t1=0            rem override temp prefix
+set t2=0            rem build temp prefix
+
+call :GetNewTmp build
 
 set this=%~nx0
 set config="vanilla.ini"
@@ -103,8 +108,8 @@ echo build log = %buildLog% >> %buildLog%
 echo install log = %installLog% >> %buildLog%
 echo git log = %gitLog% >> %buildLog%
 
-git diff HEAD > build.tmp
-for /f %%i in ("build.tmp") do set fileSize=%%~zi
+git diff HEAD > %build_tmp%
+for /f %%i in ("%build_tmp%") do set fileSize=%%~zi
 IF %fileSize% gtr 0 (
 	echo Stashing changes in working directory...
 	git add %this% > %gitLog%
@@ -180,13 +185,9 @@ for /F "usebackq tokens=*" %%a in (replace.diff) do (
 	call :CopyFile null %%~na%%~xa %%a
 )
 echo Creating override shell script...
-IF NOT exist temp\ ( mkdir temp )
-set /a c=0
 for /r . %%a in (localisation\replace\*) do (
 	echo override localisation: %%a >> %buildLog%
 	for /f "tokens=*" %%b in (localisation\replace\%%~na%%~xa) do (
-		set /a c=c+1
-		echo. %%b> temp\override!c!.tmp
 		call :AddOverrideToSH %%b "localisation\%%~na%%~xa"
 	)
 )
@@ -199,16 +200,16 @@ for /F "usebackq tokens=*" %%a in (replace.diff) do (
 )
 echo Recording changes to repository...
 git commit -m "temp-localisation-replace" >> %gitLog%
-git rev-parse HEAD > build.tmp
-( set /p masterHEAD= ) < build.tmp
+git rev-parse HEAD > %build_tmp%
+( set /p masterHEAD= ) < %build_tmp%
 @git checkout vanilla >> %gitLog%
 
 echo.
 echo. > %updateLog%
 for /F "usebackq tokens=*" %%a in (master.diff) do (
-	echo %%a > build.tmp
-	call jrepl "\\(.*(?:\\))?" " " /f "build.tmp" /o - >> %buildLog%
-	for /F "usebackq tokens=*" %%b in (build.tmp) do (
+	echo %%a > %build_tmp%
+	call jrepl "\\(.*(?:\\))?" " " /f "%build_tmp%" /o - >> %buildLog%
+	for /F "usebackq tokens=*" %%b in (%build_tmp%) do (
 		call :CopyFile %%b %%a
 	)
 )
@@ -248,14 +249,14 @@ git add * >> %gitLog%
 git reset -- %this% >> %gitLog%
 git reset -- %config% >> %gitLog%
 
-git rev-parse HEAD > build.tmp
-( set /p curHEAD= ) < build.tmp
+git rev-parse HEAD > %build_tmp%
+( set /p curHEAD= ) < %build_tmp%
 
 echo Recording changes to repository...
 git commit -m "temp-vanilla-files" >> %gitLog%
 
-git rev-parse HEAD > build.tmp
-( set /p vanillaHEAD= ) < build.tmp
+git rev-parse HEAD > %build_tmp%
+( set /p vanillaHEAD= ) < %build_tmp%
 IF "%curHEAD%"=="%vanillaHEAD%" (
 	call :CTError 6
 )
@@ -272,8 +273,8 @@ exit /b
 echo. >> %buildLog%
 echo Clean repository: >> %buildLog%
 echo Cleaning repository...
-git rev-parse HEAD > build.tmp
-( set /p curHEAD= ) < build.tmp
+git rev-parse HEAD > %build_tmp%
+( set /p curHEAD= ) < %build_tmp%
 IF "%curHEAD%"=="%vanillaHEAD%" (
 	git reset --keep HEAD~ >> %gitLog%
 
@@ -281,8 +282,8 @@ IF "%curHEAD%"=="%vanillaHEAD%" (
 	call :Error 4 %curHEAD% %vanillaHEAD%
 )
 git checkout master >> %gitLog%
-git rev-parse HEAD > build.tmp
-( set /p curHEAD= ) < build.tmp
+git rev-parse HEAD > %build_tmp%
+( set /p curHEAD= ) < %build_tmp%
 IF "%curHead%"=="%masterHEAD%" (
 	git reset --keep HEAD~ >> %gitLog%
 
@@ -291,7 +292,17 @@ IF "%curHead%"=="%masterHEAD%" (
 )
 git checkout vanilla >> %gitLog%
 RMDIR /s /q temp
-del build.tmp
+exit /b
+
+:GetNewTmp <type>
+IF "%1"=="override" (
+	set /a t1=t1+1
+	set override_tmp=temp\override!t1!.tmp
+)
+IF "%1"=="build" (
+	set /a t2=t2+1
+	set build_tmp=temp\build!t2!.tmp
+)
 exit /b
 
 :NoUpdate
@@ -320,9 +331,12 @@ exit /b
 
 set key=%1
 IF not x%key:l_english=%==x%key% ( exit /b )
-set "tf=temp\override!c!.tmp"
+
 set "awk='FNR==NR{s=s"\n"$0;next;} /%1 /{$0=substr(s,2);}"
-echo awk %awk% 1' "%tf%" %3 ^> build.tmp ^&^& mv build.tmp %3 >> override.sh
+call :GetNewTmp override
+echo. %1 %2> !override_tmp!
+
+echo awk %awk% 1' "!override_tmp!" %3 ^> !build_tmp! ^&^& mv !build_tmp! %3 >> override.sh
 exit /b
 
 :CopyFile <path>
