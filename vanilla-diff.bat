@@ -2,6 +2,14 @@
 setlocal enabledelayedexpansion
 echo.
 
+set tmpScript=script.bat
+:: used when switching git branches
+IF not "%~nx0"=="%tmpScript%" (
+	copy /b/v/y %~nx0 %tmpScript%
+	call %tmpScript%
+	exit /b
+)
+
 :welcome
 echo # Welcome to vanilla-diff!
 echo # --------------------------
