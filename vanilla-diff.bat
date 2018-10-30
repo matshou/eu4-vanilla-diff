@@ -125,6 +125,10 @@ IF %fileSize% gtr 0 (
 	echo stashed changed, see 'git.log'. >> %buildLog%
 	set fileSize=0
 )
+
+:: suppress CRLF warnings
+git config --local core.safecrlf %safecrlf% >> %gitLog%
+
 call :install
 echo. >> %buildLog%
 echo Loading configuration values...
@@ -242,7 +246,6 @@ exit /b
 echo. >> %buildLog%
 echo.
 echo Add file contents to index: >> %buildLog%
-git config --global core.safecrlf false >> %gitLog%
 echo Adding file contents to index...
 git add * >> %gitLog%
 git reset -- %this% >> %gitLog%
