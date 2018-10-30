@@ -2,6 +2,8 @@
 *.log
 *.diff
 *.tmp
+*.sh
 
 # Project files
 JREPL.BAT
+script.bat
