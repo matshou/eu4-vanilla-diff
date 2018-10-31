@@ -1,6 +1,5 @@
 @ECHO off
 setlocal enabledelayedexpansion
-echo.
 
 :: set only for main script process
 IF not DEFINED vanillaDiff (
@@ -87,13 +86,12 @@ IF "%option%"=="-keep-files" (
 ) else (
 	call :cleanRepo
 )
-echo.
-echo Finished generating diff file!
+echo. & echo Finished generating diff file!
 echo See 'vanilla.diff'
 goto input
 
 :init
-echo Initializing application...
+echo. & echo Initializing application...
 IF exist "error.log" del error.log
 IF NOT exist temp\ ( mkdir temp )
 IF NOT exist shell\ ( mkdir shell )
@@ -110,8 +108,11 @@ set buildLog="build.log"
 set installLog="install.log"
 set gitLog="git.log"
 
-echo. > %buildLog%
 echo Initialize process: >> %buildLog%
+:: create log files
+copy NUL %buildLog% > nul
+copy NUL %updateLog% > nul
+
 echo config file = %config% >> %buildLog%
 echo update log = %updateLog% >> %buildLog%
 echo build log = %buildLog% >> %buildLog%
@@ -134,9 +135,8 @@ IF %fileSize% gtr 0 (
 git config --local core.safecrlf %safecrlf% >> %gitLog%
 
 call :install
-echo. >> %buildLog%
 echo Loading configuration values...
-echo Read configuration file: >> %buildLog%
+(echo. & echo Read configuration file: & echo.) >> %buildLog%
 IF not EXIST %config% ( call :CTError 1 )
 for /F "usebackq tokens=*" %%a in (%config%) do (
 	call :ReadConfig %%a
@@ -150,8 +150,7 @@ exit /b
 
 :install
 IF not EXIST "JREPL.BAT" (
-	echo. >> %buildLog%
-	echo Install dependencies. >> %buildLog%
+	echo. & echo Install dependencies. >> %buildLog%
 	echo Regex text processor not found.
 	echo Downloading and installing...
 	echo download jrepl >> %buildLog%
@@ -162,13 +161,11 @@ IF not EXIST "JREPL.BAT" (
 	IF not EXIST "JREPL.BAT" ( call :CTError 5 )
 	echo Finished installing JREPL.
 	del %installLog%
-	echo.
 )
 exit /b
 
 :copyFiles
-echo. >> %buildLog%
-echo Copy vanilla files: >> %buildLog%
+(echo. & echo Copy vanilla files: & echo.) >> %buildLog%
 echo Preparing to copy files...
 
 echo Creating list of files on master branch...
@@ -188,8 +185,8 @@ for /r . %%a in (localisation\replace\*) do (
 set fileCategory=null
 IF exist files.diff del files.diff >> %buildLog%
 @copy NUL files.diff > nul
-echo.
-echo Copying override localisation files...
+
+echo. & echo Copying override localisation files...
 for /F "usebackq tokens=*" %%a in (replace.diff) do (
 	call :CopyFile null %%~na%%~xa %%a
 )
@@ -215,7 +212,6 @@ git rev-parse HEAD > %build_tmp%
 call :Checkout vanilla
 
 echo.
-echo. > %updateLog%
 for /F "usebackq tokens=*" %%a in (master.diff) do (
 	echo %%a > %build_tmp%
 	call jrepl "\\(.*(?:\\))?" " " /f "%build_tmp%" /o - >> %buildLog%
@@ -223,15 +219,13 @@ for /F "usebackq tokens=*" %%a in (master.diff) do (
 		call :CopyFile %%b %%a
 	)
 )
-echo.
-echo Completed copying vanilla files!
+echo. & echo Completed copying vanilla files!
 echo Operation log saved in 'update.log'
 exit /b
 
 :trimFiles
-echo. >> %buildLog%
-echo Remove trailing space: >> %buildLog%
-echo Trimming trailing space...
+(echo. & echo Remove trailing space: & echo.) >> %buildLog%
+echo. & echo Trimming trailing space...
 for /F "usebackq tokens=*" %%a in (files.diff) do (
 	call :trimFile %%a
 )
@@ -250,9 +244,7 @@ echo skip %1 >> %buildLog%
 exit /b
 
 :createCommit
-echo. >> %buildLog%
-echo.
-echo Add file contents to index: >> %buildLog%
+(echo. & echo Add file contents to index: & echo.) >> %buildLog%
 echo Adding file contents to index...
 git add * >> %gitLog%
 git reset -- %vanillaDiff% >> %gitLog%
@@ -261,19 +253,21 @@ git reset -- %config% >> %gitLog%
 git rev-parse HEAD > %build_tmp%
 ( set /p curHEAD= ) < %build_tmp%
 
+echo do commit "temp-vanilla-files" >> %buildLog%
 echo Recording changes to repository...
 git commit -m "temp-vanilla-files" >> %gitLog%
 
 git rev-parse HEAD > %build_tmp%
 ( set /p vanillaHEAD= ) < %build_tmp%
+
+echo commit SHA: %vanillaHEAD% >> %buildLog%
 IF "%curHEAD%"=="%vanillaHEAD%" (
 	call :CTError 6
 )
 exit /b
 
 :writeDiff
-echo. >> %buildLog%
-echo Generate diff file: >> %buildLog%
+(echo. & echo Generate diff file: & echo.) >> %buildLog%
 echo Writing diff to file...
 for /F "usebackq tokens=*" %%a in (.diffignore) do (
 	set "exclude=!exclude! ^':^(exclude^)%%a^'"
@@ -283,8 +277,7 @@ call :RunBash shCommand diff.sh vanilla.diff
 exit /b
 
 :cleanRepo
-echo. >> %buildLog%
-echo Clean repository: >> %buildLog%
+(echo. & echo Clean repository: & echo.) >> %buildLog%
 echo Cleaning repository...
 git rev-parse HEAD > %build_tmp%
 ( set /p curHEAD= ) < %build_tmp%
@@ -466,8 +459,7 @@ IF "%1"=="4" (
 	echo Something went wrong, skipping cleanup.
 )
 IF "%1"=="7" (
-	echo.
-	echo No vanilla files found in repository.
+	echo. & echo No vanilla files found in repository.
 	echo Either running with 'no-update' or something went wrong.
 )
 IF "%1"=="9" (
@@ -502,8 +494,7 @@ IF "%1"=="6" (
 IF "%1"=="8" (
 	echo Unable to read user input.
 )
-echo.
-echo Critical error occured, aborting operation!
+echo. & echo Critical error occured, aborting operation!
 goto input
 
 :EOF
