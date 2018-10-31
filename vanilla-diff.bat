@@ -108,11 +108,11 @@ set buildLog="build.log"
 set installLog="install.log"
 set gitLog="git.log"
 
-echo Initialize process: >> %buildLog%
 :: create log files
 copy NUL %buildLog% > nul
 copy NUL %updateLog% > nul
 
+call :PrintHeader "Initialize process:" 19 %buildLog%
 echo config file = %config% >> %buildLog%
 echo update log = %updateLog% >> %buildLog%
 echo build log = %buildLog% >> %buildLog%
@@ -136,7 +136,7 @@ git config --local core.safecrlf %safecrlf% >> %gitLog%
 
 call :install
 echo Loading configuration values...
-(echo. & echo Read configuration file: & echo.) >> %buildLog%
+call :PrintHeader "Read configuration file:" 24 %buildLog%
 IF not EXIST %config% ( call :CTError 1 )
 for /F "usebackq tokens=*" %%a in (%config%) do (
 	call :ReadConfig %%a
@@ -165,7 +165,7 @@ IF not EXIST "JREPL.BAT" (
 exit /b
 
 :copyFiles
-(echo. & echo Copy vanilla files: & echo.) >> %buildLog%
+call :PrintHeader "Copy vanilla files:" 19 %buildLog%
 echo Preparing to copy files...
 
 echo Creating list of files on master branch...
@@ -224,7 +224,7 @@ echo Operation log saved in 'update.log'
 exit /b
 
 :trimFiles
-(echo. & echo Remove trailing space: & echo.) >> %buildLog%
+call :PrintHeader "Remove trailing space:" 22 %buildLog%
 echo. & echo Trimming trailing space...
 for /F "usebackq tokens=*" %%a in (files.diff) do (
 	call :trimFile %%a
@@ -244,7 +244,7 @@ echo skip %1 >> %buildLog%
 exit /b
 
 :createCommit
-(echo. & echo Add file contents to index: & echo.) >> %buildLog%
+call :PrintHeader "Add file contents to index:" 27 %buildLog%
 echo Adding file contents to index...
 git add * >> %gitLog%
 git reset -- %vanillaDiff% >> %gitLog%
@@ -267,7 +267,7 @@ IF "%curHEAD%"=="%vanillaHEAD%" (
 exit /b
 
 :writeDiff
-(echo. & echo Generate diff file: & echo.) >> %buildLog%
+call :PrintHeader "Generate diff file:" 19 %buildLog%
 echo Writing diff to file...
 for /F "usebackq tokens=*" %%a in (.diffignore) do (
 	set "exclude=!exclude! ^':^(exclude^)%%a^'"
@@ -277,7 +277,7 @@ call :RunBash shCommand diff.sh vanilla.diff
 exit /b
 
 :cleanRepo
-(echo. & echo Clean repository: & echo.) >> %buildLog%
+call :PrintHeader "Clean repository:" 17 %buildLog%
 echo Cleaning repository...
 git rev-parse HEAD > %build_tmp%
 ( set /p curHEAD= ) < %build_tmp%
