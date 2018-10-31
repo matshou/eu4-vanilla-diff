@@ -14,13 +14,13 @@ IF not "%~nx0"=="%tmpScript%" (
 	exit /b
 )
 
-call :init
-echo.
-
 :test
 REM place test code here
 REM pause
 REM exit/b
+
+call :init
+echo.
 
 :welcome
 echo # Welcome to vanilla-diff!
