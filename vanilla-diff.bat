@@ -345,6 +345,7 @@ start /wait %gitBashPath% -i -c "bash shell/%1"
 exit /b
 
 :Checkout <branch>
+call :GetCurrentBranch old_branch
 IF "%1"=="vanilla" (
 	call :Git checkout vanilla --quiet
 	call :Git stash pop
@@ -352,6 +353,17 @@ IF "%1"=="vanilla" (
 	call :Git stash save "vanilla-diff checkout:%1"
 	call :Git checkout %1 --quiet
 )
+call :GetCurrentBranch new_branch
+IF "%old_branch%"=="%new_branch%" (
+	echo Unable to checkout to '%new_branch%'
+	echo Something went wrong, read 'git.log' for more info.
+	call :CTError
+)
+exit /b
+
+:GetCurrentBranch <output>
+call :RunCommand git rev-parse --abbrev-ref HEAD
+set %1=%output%
 exit /b
 
 :ReadConfig <entry> <value>
