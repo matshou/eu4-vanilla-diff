@@ -96,6 +96,7 @@ goto input
 echo Initializing application...
 IF exist "error.log" del error.log
 IF NOT exist temp\ ( mkdir temp )
+IF NOT exist shell\ ( mkdir shell )
 
 set fileSize=0      rem temp file size
 set t1=0            rem override temp prefix
@@ -196,11 +197,11 @@ echo Creating override shell script...
 for /r . %%a in (localisation\replace\*) do (
 	echo override localisation: %%a >> %buildLog%
 	for /f "tokens=*" %%b in (localisation\replace\%%~na%%~xa) do (
-		call :AddOverrideToSH %%b "localisation\%%~na%%~xa"
+		call :AddOverride %%b "localisation\%%~na%%~xa"
 	)
 )
 echo Applying overrides to localisation...
-start /wait %gitBashPath% -i -c "bash override.sh"
+call :RunShellScript override.sh
 
 echo Adding localisation changes to index...
 for /F "usebackq tokens=*" %%a in (replace.diff) do (
@@ -277,8 +278,8 @@ echo Writing diff to file...
 for /F "usebackq tokens=*" %%a in (.diffignore) do (
 	set "exclude=!exclude! ^':^(exclude^)%%a^'"
 )
-echo git diff --diff-filter=M vanilla master %exclude% ^> vanilla.diff > diff.sh
-call :RunShellScript "bash diff.sh"
+set "shCommand=git diff --diff-filter=M vanilla master %exclude%"
+call :RunBash shCommand diff.sh vanilla.diff
 exit /b
 
 :cleanRepo
@@ -304,11 +305,27 @@ IF "%curHEAD%"=="%masterHEAD%" (
 )
 call :Checkout vanilla
 RMDIR /s /q temp
-del override.sh
+RMDIR /s /q shell
+exit /b
+
+:RunBash <command> <name> <output>
+call :CreateShellScript "!%1!" %2 %3
+echo execute shell command: "!%1!" >> %buildLog%
+call :RunShellScript %2
+exit /b
+
+:CreateShellScript <command> <name> <output>
+echo create new shell script: %2 ^/o %~3 >> %buildLog%
+echo %~1 ^> %~3 > shell\%2
+exit /b
+
+:AppendToShellScript <command> <name> <output>
+REM echo append command to shell script %2: !%1! >> %buildLog%
+echo !%1! ^> !%3! >> shell\%2
 exit /b
 
 :RunShellScript <command>
-start /wait %gitBashPath% -i -c %1
+start /wait %gitBashPath% -i -c "bash shell/%1"
 exit /b
 
 :Checkout <branch>
@@ -372,16 +389,16 @@ IF not %fileSize% gtr 0 (
 )
 exit /b
 
-:AddOverrideToSH <key> <text> <file>
-
+:AddOverride <key> <text> <file>
 set key=%1
 IF not x%key:l_english=%==x%key% ( exit /b )
 
-set "awk='FNR==NR{s=s"\n"$0;next;} /%1 /{$0=substr(s,2);}"
 call :GetNewTmp override
 echo. %1 %2> !override_tmp!
 
-echo awk %awk% 1' "!override_tmp!" %3 ^> !build_tmp! ^&^& mv !build_tmp! %3 >> override.sh
+set "shCommand=awk 'FNR==NR{s=s"\n"$0;next;} /%1 /{$0=substr(s,2);} 1' "!override_tmp!" %3"
+set "output=!build_tmp! ^&^& mv !build_tmp! %3"
+call :AppendToShellScript shCommand override.sh output
 exit /b
 
 :CopyFile <path>
