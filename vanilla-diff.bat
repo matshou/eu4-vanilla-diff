@@ -452,6 +452,14 @@ IF "%a%"=="y" ( exit /b )
 IF "%a%"=="n" ( exit /b )
 goto Query
 
+:PrintHeader <text> <length> <output>
+set separator=
+for /L %%a in (1,1,%2) do (
+	set separator=!separator!-
+)
+(echo. & echo %~1 & echo %separator%) >> %3
+exit /b
+
 :Error <code> [<info>]
 
 IF "%1"=="4" (
