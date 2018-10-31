@@ -102,11 +102,11 @@ set t2=0            rem build temp prefix
 
 call :GetNewTmp build
 
-set config="vanilla.ini"
-set updateLog="update.log"
-set buildLog="build.log"
-set installLog="install.log"
-set gitLog="git.log"
+set config=vanilla.ini
+set updateLog=update.log
+set buildLog=build.log
+set installLog=install.log
+set gitLog=git.log
 
 :: create log files
 copy NUL %buildLog% > nul
