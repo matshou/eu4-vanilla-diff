@@ -56,7 +56,7 @@ IF "%command%"=="quit" ( exit /b )
 
 IF "%command%"=="update" (
 	echo Updating vanilla-diff...
-	git pull !repoURL!
+	call :Git pull !repoURL!
 	goto input
 )
 
@@ -111,6 +111,7 @@ set gitLog="git.log"
 :: create log files
 copy NUL %buildLog% > nul
 copy NUL %updateLog% > nul
+copy NUL %gitLog% > nul
 
 call :PrintHeader "Initialize process:" 19 %buildLog%
 echo config file = %config% >> %buildLog%
@@ -123,16 +124,19 @@ git diff HEAD > %build_tmp%
 for /f %%i in ("%build_tmp%") do set fileSize=%%~zi
 IF %fileSize% gtr 0 (
 	echo Stashing changes in working directory...
-	git add %vanillaDiff% > %gitLog%
-	git add %config% >> %gitLog%
-	git stash save --keep-index >> %gitLog%
+	rem add dependencies to index
+	rem :::::::::::::::::::::::::
+	call :Git add %config%
+	rem :::::::::::::::::::::::::
+	call :Git stash save --keep-index "vanilla-diff wip"
+
 	git diff HEAD > head.diff
 	echo stashed changed, see 'git.log'. >> %buildLog%
 	set fileSize=0
 )
 
 :: suppress CRLF warnings
-git config --local core.safecrlf %safecrlf% >> %gitLog%
+call :Git config --local core.safecrlf %safecrlf%
 
 call :install
 echo Loading configuration values...
@@ -202,10 +206,10 @@ call :RunShellScript override.sh
 
 echo Adding localisation changes to index...
 for /F "usebackq tokens=*" %%a in (replace.diff) do (
-	git add %%a >> %gitLog%
+	call :Git add %%a
 )
 echo Recording changes to repository...
-git commit -m "temp-localisation-replace" >> %gitLog%
+call :Git commit -m "temp-localisation-replace"
 git rev-parse HEAD > %build_tmp%
 ( set /p masterHEAD= ) < %build_tmp%
 
@@ -246,16 +250,16 @@ exit /b
 :createCommit
 call :PrintHeader "Add file contents to index:" 27 %buildLog%
 echo Adding file contents to index...
-git add * >> %gitLog%
-git reset -- %vanillaDiff% >> %gitLog%
-git reset -- %config% >> %gitLog%
+call :Git add *
+call :Git reset -- %vanillaDiff%
+call :Git reset -- %config%
 
 git rev-parse HEAD > %build_tmp%
 ( set /p curHEAD= ) < %build_tmp%
 
 echo do commit "temp-vanilla-files" >> %buildLog%
 echo Recording changes to repository...
-git commit -m "temp-vanilla-files" >> %gitLog%
+call :Git commit -m "temp-vanilla-files"
 
 git rev-parse HEAD > %build_tmp%
 ( set /p vanillaHEAD= ) < %build_tmp%
@@ -283,7 +287,7 @@ git rev-parse HEAD > %build_tmp%
 ( set /p curHEAD= ) < %build_tmp%
 IF "%curHEAD%"=="%vanillaHEAD%" (
 	echo reset vanilla HEAD >> %buildLog%
-	git reset --keep HEAD~ >> %gitLog%
+	call :Git reset --keep HEAD~
 
 ) else (
 	call :Error 4 %curHEAD% %vanillaHEAD%
@@ -293,7 +297,7 @@ git rev-parse HEAD > %build_tmp%
 ( set /p curHEAD= ) < %build_tmp%
 IF "%curHEAD%"=="%masterHEAD%" (
 	echo reset master HEAD >> %buildLog%
-	git reset --keep HEAD~ >> %gitLog%
+	call :Git reset --keep HEAD~
 
 ) else (
 	call :Error 4 %currHEAD% %masterHEAD%
@@ -303,6 +307,21 @@ echo remove temp dir >> %buildLog%
 RMDIR /s /q temp
 echo remove shell dir >> %buildLog%
 RMDIR /s /q shell
+exit /b
+
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::
+:::::::::::::::::::::::::::::::::::::::::::::::::::
+
+:RunCommand <command>
+FOR /F "tokens=*" %%i in ('%*') do SET output=%%i
+exit /b
+
+:: use § as a replacement token for text
+:: ex. call :Git stash "save §" "vanilla-diff wip"
+:Git <command>
+(echo. & echo $ git %*) >> %gitLog%
+git %* >> %gitLog%
 exit /b
 
 :RunBash <command> <name> <output>
@@ -327,11 +346,11 @@ exit /b
 
 :Checkout <branch>
 IF "%1"=="vanilla" (
-	@git checkout vanilla --quiet >> %gitLog%
-	git stash pop >> %gitLog%
+	call :Git checkout vanilla --quiet
+	call :Git stash pop
 ) else (
-	git stash save "vanilla-diff checkout:%1" >> %gitLog%
-	@git checkout %1 --quiet >> %gitLog%
+	call :Git stash save "vanilla-diff checkout:%1"
+	call :Git checkout %1 --quiet
 )
 exit /b
 
