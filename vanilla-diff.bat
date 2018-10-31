@@ -195,7 +195,7 @@ for /F "usebackq tokens=*" %%a in (replace.diff) do (
 )
 echo Creating override shell script...
 for /r . %%a in (localisation\replace\*) do (
-	echo override localisation: %%a >> %buildLog%
+	echo override localisation\replace\%%~na%%~xa >> %buildLog%
 	for /f "tokens=*" %%b in (localisation\replace\%%~na%%~xa) do (
 		call :AddOverride %%b "localisation\%%~na%%~xa"
 	)
@@ -289,6 +289,7 @@ echo Cleaning repository...
 git rev-parse HEAD > %build_tmp%
 ( set /p curHEAD= ) < %build_tmp%
 IF "%curHEAD%"=="%vanillaHEAD%" (
+	echo reset vanilla HEAD >> %buildLog%
 	git reset --keep HEAD~ >> %gitLog%
 
 ) else (
@@ -298,13 +299,16 @@ call :Checkout master
 git rev-parse HEAD > %build_tmp%
 ( set /p curHEAD= ) < %build_tmp%
 IF "%curHEAD%"=="%masterHEAD%" (
+	echo reset master HEAD >> %buildLog%
 	git reset --keep HEAD~ >> %gitLog%
 
 ) else (
 	call :Error 4 %currHEAD% %masterHEAD%
 )
 call :Checkout vanilla
+echo remove temp dir >> %buildLog%
 RMDIR /s /q temp
+echo remove shell dir >> %buildLog%
 RMDIR /s /q shell
 exit /b
 
