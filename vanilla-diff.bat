@@ -322,14 +322,18 @@ exit /b
 
 
 :::::::::::::::::::::::::::::::::::::::::::::::::::
+::::::::::::::: Task Subroutines ::::::::::::::::::
 :::::::::::::::::::::::::::::::::::::::::::::::::::
 
 :RunCommand <command>
 FOR /F "tokens=*" %%i in ('%*') do SET output=%%i
 exit /b
 
-:: use § as a replacement token for text
-:: ex. call :Git stash "save §" "vanilla-diff wip"
+:GetFileSize <file>
+set fileSize=0
+for /f %%i in ("%~1") do set fileSize=%%~zi
+exit /b
+
 :Git <command>
 (echo. & echo $ git %*) >> %gitLog%
 git %* >> %gitLog%
@@ -345,31 +349,6 @@ IF %fileSize% gtr 0 (
 	exit /b
 )
 exit /b 1
-
-:GetFileSize <file>
-set fileSize=0
-for /f %%i in ("%~1") do set fileSize=%%~zi
-exit /b
-
-:RunBash <command> <name> <output>
-call :CreateShellScript "!%1!" %2 %3
-echo execute shell command: "!%1!" >> %buildLog%
-call :RunShellScript %2
-exit /b
-
-:CreateShellScript <command> <name> <output>
-echo create new shell script: %2 ^/o %~3 >> %buildLog%
-echo %~1 ^> %~3 > shell\%2
-exit /b
-
-:AppendToShellScript <command> <name> <output>
-REM echo append command to shell script %2: !%1! >> %buildLog%
-echo !%1! ^> !%3! >> shell\%2
-exit /b
-
-:RunShellScript <command>
-start /wait %gitBashPath% -i -c "bash shell/%1"
-exit /b
 
 :Checkout <branch>
 call :GetCurrentBranch old_branch
@@ -387,9 +366,29 @@ call :RunCommand git rev-parse --abbrev-ref HEAD
 set %1=%output%
 exit /b
 
+:RunBash <command> <name> <output>
+call :CreateShellScript "!%1!" %2 %3
+echo execute shell command: "!%1!" >> %buildLog%
+call :RunShellScript %2
+exit /b
+
+:CreateShellScript <command> <name> <output>
+echo create new shell script: %2 ^/o %~3 >> %buildLog%
+echo %~1 ^> %~3 > shell\%2
+exit /b
+
+:AppendToShellScript <command> <name> <output>
+echo !%1! ^> !%3! >> shell\%2
+exit /b
+
+:RunShellScript <command>
+start /wait %gitBashPath% -i -c "bash shell/%1"
+exit /b
+
 :ReadConfig <entry> <value>
 FOR /F "tokens=1-2 delims==" %%I IN ("%*") DO (
 	set value=%%~J
+
 	IF "%%I"=="txtFiles" (
 		call :ParseConfigValue "%%J" value
 	)
