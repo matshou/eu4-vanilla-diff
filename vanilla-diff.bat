@@ -16,6 +16,10 @@ IF not "%~nx0"=="%tmpScript%" (
 		(echo. & echo $ git stash pop) >> %gitLog%
 		git stash pop >> %gitLog%
 	)
+	echo remove temp dir >> %buildLog%
+	RMDIR /s /q temp
+	echo remove shell dir >> %buildLog%
+	RMDIR /s /q shell
 	exit /b
 )
 
@@ -122,7 +126,7 @@ echo install log = %installLog% >> %buildLog%
 echo git log = %gitLog% >> %buildLog%
 
 git diff HEAD > %build_tmp%
-for /f %%i in ("%build_tmp%") do set fileSize=%%~zi
+call :GetFileSize %build_tmp%
 IF %fileSize% gtr 0 (
 	echo Stashing changes in working directory...
 	rem add dependencies to index
@@ -135,7 +139,6 @@ IF %fileSize% gtr 0 (
 	)
 	copy %build_tmp% head.diff > nul
 	echo stashed changed, see 'head.diff'. >> %buildLog%
-	set fileSize=0
 )
 
 :: suppress CRLF warnings
@@ -306,10 +309,6 @@ IF "%curHEAD%"=="%masterHEAD%" (
 	call :Error 4 %currHEAD% %masterHEAD%
 )
 call :Checkout vanilla
-echo remove temp dir >> %buildLog%
-RMDIR /s /q temp
-echo remove shell dir >> %buildLog%
-RMDIR /s /q shell
 exit /b
 
 
