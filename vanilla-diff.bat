@@ -405,6 +405,11 @@ call jrepl "," " " /s values > %build_tmp%
 set %2=%values%
 exit /b
 
+:GetSubstring <input> <replace> <regex> <rules> <output>
+set "cmd=echo !%~1!^^|jrepl . %2 /p %3 /prepl %4"
+FOR /F "tokens=*" %%i in ('%cmd%') do SET %5=%%i
+exit /b
+
 :GetNewTmp <type>
 IF "%1"=="override" (
 	set /a t1=t1+1
