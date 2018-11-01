@@ -39,7 +39,6 @@ echo #   ^<command^> [--^<option^>]
 echo #
 echo # Options:
 echo #   keep-files   - Skip repository cleanup
-echo #   no-update    - Don't update vanilla files
 echo #
 echo # Commands:
 echo #   generate   - Generate a new vanilla diff file.
@@ -75,14 +74,7 @@ set option=%2
 exit /b
 
 :run
-IF not "%option%"=="-no-update" (
-	call :copyFiles
-) else (
-	echo Skipping file update.
-)
-IF "%option%"=="-no-update" (
-	call :NoUpdate
-)
+call :copyFiles
 call :trimFiles
 call :createCommit
 call :writeDiff
@@ -417,28 +409,6 @@ IF "%1"=="override" (
 IF "%1"=="build" (
 	set /a t2=t2+1
 	set build_tmp=temp\build!t2!.tmp
-)
-exit /b
-
-:NoUpdate
-git diff --diff-filter=M vanilla master > test.tmp
-for /f %%i in ("test.tmp") do set fileSize=%%~zi
-:: no vanilla files found in root dir
-IF not %fileSize% gtr 0 (
-	set fileSize=0
-	call :Error 7
-	set "answer="
-	call :Query "Do you wish to run an update?" answer
-	echo.
-	IF "!answer!"=="y" (
-		call :copyFiles
-		exit /b
-	)
-	IF "!answer!"=="n" (
-		echo Aborting operation.
-		goto input
-	)
-	call :CTError 8
 )
 exit /b
 
