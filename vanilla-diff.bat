@@ -10,7 +10,12 @@ set tmpScript=script.bat
 IF not "%~nx0"=="%tmpScript%" (
 	@copy /b/v/y %~nx0 %tmpScript% > nul
 	call %tmpScript%
+
 	@del %tmpScript%
+	IF "%stashed%"=="true" (
+		(echo. & echo $ git stash pop) >> %gitLog%
+		git stash pop >> %gitLog%
+	)
 	exit /b
 )
 
@@ -108,6 +113,10 @@ set buildLog=build.log
 set installLog=install.log
 set gitLog=git.log
 
+set /a seed=%RANDOM% * 1000 / 32768 + 1
+set stash_id=%seed%
+set stashed=false
+
 :: create log files
 copy NUL %buildLog% > nul
 copy NUL %updateLog% > nul
@@ -128,10 +137,12 @@ IF %fileSize% gtr 0 (
 	rem :::::::::::::::::::::::::
 	call :Git add %config%
 	rem :::::::::::::::::::::::::
-	call :Git stash save --keep-index "vanilla-diff wip"
-
-	git diff HEAD > head.diff
-	echo stashed changed, see 'git.log'. >> %buildLog%
+	call :GitStash "wip" --keep-index
+	IF not ERRORLEVEL 1 (
+		set stashed=true
+	)
+	copy %build_tmp% head.diff > nul
+	echo stashed changed, see 'head.diff'. >> %buildLog%
 	set fileSize=0
 )
 
@@ -322,6 +333,22 @@ exit /b
 :Git <command>
 (echo. & echo $ git %*) >> %gitLog%
 git %* >> %gitLog%
+exit /b
+
+:GitStash <message> [<args>]
+set /a stash_id=%stash_id%+1
+git diff HEAD > git.tmp
+call :GetFileSize git.tmp
+IF %fileSize% gtr 0 (
+	call :Git stash push %~2 -m "vanilla-diff %~1 %stash_id%"
+	git stash show >> %gitLog%
+	exit /b
+)
+exit /b 1
+
+:GetFileSize <file>
+set fileSize=0
+for /f %%i in ("%~1") do set fileSize=%%~zi
 exit /b
 
 :RunBash <command> <name> <output>
