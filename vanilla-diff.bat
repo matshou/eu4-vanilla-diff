@@ -149,6 +149,11 @@ IF not EXIST "%gamePath%\eu4.exe" (
 	echo Make sure that 'gamePath' entry in 'vanilla.ini' points to game directory.
 	call :CTError
 )
+IF not EXIST "%gitBashPath%" (
+	echo. & echo Git Bash not installed!
+	echo Make sure that 'gitBashPath' config points to a MinGW executable.
+	call :CTError
+)
 exit /b
 
 :install
