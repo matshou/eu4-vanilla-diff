@@ -373,16 +373,10 @@ exit /b
 
 :Checkout <branch>
 call :GetCurrentBranch old_branch
-IF "%1"=="vanilla" (
-	call :Git checkout vanilla --quiet
-	call :Git stash pop
-) else (
-	call :Git stash save "vanilla-diff checkout:%1"
-	call :Git checkout %1 --quiet
-)
+call :Git checkout %1 --quiet
 call :GetCurrentBranch new_branch
 IF "%old_branch%"=="%new_branch%" (
-	echo Unable to checkout to '%new_branch%'
+	echo Unable to checkout to '%1'
 	echo Something went wrong, read 'git.log' for more info.
 	call :CTError
 )
