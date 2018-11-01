@@ -1,6 +1,17 @@
 @ECHO off
 setlocal enabledelayedexpansion
 
+:: define config files here
+set config=vanilla.ini
+set updateLog=update.log
+set buildLog=build.log
+set installLog=install.log
+set gitLog=git.log
+
+set fileSize=0
+set t1=0
+set t2=0
+
 :: set only for main script process
 IF not DEFINED vanillaDiff (
 	set vanillaDiff=%~nx0
@@ -97,17 +108,7 @@ IF exist "error.log" del error.log
 IF NOT exist temp\ ( mkdir temp )
 IF NOT exist shell\ ( mkdir shell )
 
-set fileSize=0      rem temp file size
-set t1=0            rem override temp prefix
-set t2=0            rem build temp prefix
-
 call :GetNewTmp build
-
-set config=vanilla.ini
-set updateLog=update.log
-set buildLog=build.log
-set installLog=install.log
-set gitLog=git.log
 
 set /a seed=%RANDOM% * 1000 / 32768 + 1
 set stash_id=%seed%
