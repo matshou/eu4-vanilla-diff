@@ -141,7 +141,10 @@ call :Git config --local core.safecrlf %safecrlf%
 call :install
 echo Loading configuration values...
 call :PrintHeader "Read configuration file:" 24 %buildLog%
-IF not EXIST %config% ( call :CTError 1 )
+IF not EXIST %config% (
+	echo Missing config file, update your local repository.
+	call :CTError
+)
 for /F "usebackq tokens=*" %%a in (%config%) do (
 	call :ReadConfig %%a
 )
@@ -167,7 +170,10 @@ IF not EXIST "JREPL.BAT" (
 	echo extract package >> %buildLog%
 	7z e -aoa JREPL.zip >> %installLog%
 	del JREPL.zip >> %installLog%
-	IF not EXIST "JREPL.BAT" ( call :CTError 5 )
+	IF not EXIST "JREPL.BAT" (
+		echo Unable to install JREPL, read 'install.log' for more info.
+		call :CTError
+	)
 	echo Finished installing JREPL.
 	del %installLog%
 )
@@ -271,7 +277,8 @@ git rev-parse HEAD > %build_tmp%
 
 echo commit SHA: %vanillaHEAD% >> %buildLog%
 IF "%curHEAD%"=="%vanillaHEAD%" (
-	call :CTError 6
+	echo Failed to commit changes, read 'build.log' for more info.
+	call :CTError
 )
 exit /b
 
@@ -507,26 +514,7 @@ IF "%1"=="11" (
 )
 exit /b
 
-:CTError <code> [<info>]
-
-IF "%1"=="1" (
-	echo Missing config file, update your local repository.
-)
-IF "%1"=="2" (
-	echo Missing '%2' entry in config file!
-)
-IF "%1"=="3" (
-	echo Invalid '%2' entry in config file!
-)
-IF "%1"=="5" (
-	echo Unable to install JREPL, read 'install.log' for more info.
-)
-IF "%1"=="6" (
-	echo Failed to commit changes, read 'build.log' for more info.
-)
-IF "%1"=="8" (
-	echo Unable to read user input.
-)
+:CTError
 echo. & echo Critical error occured, aborting operation!
 set _errLevel=%1
 REM *** Remove all calls from the current batch from the call stack
