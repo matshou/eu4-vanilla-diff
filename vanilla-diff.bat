@@ -498,10 +498,6 @@ IF "%1"=="4" (
 	echo Unexpected HEAD (%2), expected (%3).
 	echo Something went wrong, skipping cleanup.
 )
-IF "%1"=="7" (
-	echo. & echo No vanilla files found in repository.
-	echo Either running with 'no-update' or something went wrong.
-)
 IF "%1"=="9" (
 	echo Unable to find file '%2' in root directory.
 )
