@@ -32,6 +32,7 @@ IF not "%~nx0"=="%tmpScript%" (
 	RMDIR /s /q temp
 	echo remove shell dir >> %buildLog%
 	RMDIR /s /q shell
+	pause
 	exit /b
 )
 
@@ -527,7 +528,22 @@ IF "%1"=="8" (
 	echo Unable to read user input.
 )
 echo. & echo Critical error occured, aborting operation!
-goto input
-
-:EOF
-pause
+set _errLevel=%1
+REM *** Remove all calls from the current batch from the call stack
+:popStack
+(
+    (goto) 2>nul
+    setlocal DisableDelayedExpansion
+    call set "caller=%%~0"
+    call set _caller=%%caller:~0,1%%
+    call set _caller=%%_caller::=%%
+    if not defined _caller (
+        REM callType = func
+        rem set _errLevel=%_errLevel%
+        goto :popStack
+    )
+    (goto) 2>nul
+    endlocal
+    cmd /c "exit /b %_errLevel%"
+)
+exit /b
