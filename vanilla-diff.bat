@@ -285,7 +285,11 @@ exit /b
 call :PrintHeader "Generate diff file:" 19 %buildLog%
 echo Writing diff to file...
 for /F "usebackq tokens=*" %%a in (.diffignore) do (
-	set "exclude=!exclude! ^':^(exclude^)%%a^'"
+	FOR /F "tokens=1" %%x IN ("%%a") DO (
+		IF not "%%x"=="#" (
+			set "exclude=!exclude! ^':^(exclude^)%%a^'"
+		)
+	)
 )
 set "shCommand=git diff --diff-filter=M vanilla master %exclude%"
 call :RunBash shCommand diff.sh vanilla.diff
@@ -382,7 +386,10 @@ exit /b
 start /wait %gitBashPath% -i -c "bash shell/%1"
 exit /b
 
-:ReadConfig <entry> <value>
+:ReadConfig <entry>
+:: ignore comment lines
+IF "%1"=="#" exit /b
+
 FOR /F "tokens=1-2 delims==" %%I IN ("%*") DO (
 	set value=%%~J
 	:: parse list config entries
