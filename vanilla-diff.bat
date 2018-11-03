@@ -289,6 +289,7 @@ exit /b
 :writeDiff
 call :PrintHeader "Generate diff file:" 19 %buildLog%
 echo Writing diff to file...
+set "exclude="
 for /F "usebackq tokens=*" %%a in (.diffignore) do (
 	FOR /F "tokens=1" %%x IN ("%%a") DO (
 		IF not "%%x"=="#" (
@@ -316,7 +317,7 @@ IF not "%argument%"=="-skip-local" (
 	call :Checkout master
 	git rev-parse HEAD > %build_tmp%
 	( set /p curHEAD= ) < %build_tmp%
-	IF "%curHEAD%"=="%masterHEAD%" (
+	IF "!curHEAD!"=="%masterHEAD%" (
 		echo reset master HEAD >> %buildLog%
 		call :Git reset --keep HEAD~
 
