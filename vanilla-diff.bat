@@ -6,6 +6,7 @@ set config=vanilla.ini
 set updateLog=update.log
 set buildLog=build.log
 set installLog=install.log
+set errorLog=error.log
 set gitLog=git.log
 
 set fileSize=0
@@ -26,7 +27,7 @@ IF not "%~nx0"=="%tmpScript%" (
 	call :GetFileSize head.diff
 	IF !fileSize! gtr 0 (
 		(echo. & echo $ git stash pop) >> %gitLog%
-		git stash pop >> %gitLog%
+		git stash pop 1>> %gitLog% 2>> %errorLog%
 	)
 	echo remove temp dir >> %buildLog%
 	RMDIR /s /q temp
@@ -118,6 +119,7 @@ set stash_id=%seed%
 :: create log files
 copy NUL %buildLog% > nul
 copy NUL %updateLog% > nul
+copy NUL %errorLog% > nul
 copy NUL %gitLog% > nul
 
 call :PrintHeader "Initialize process:" 19 %buildLog%
@@ -125,6 +127,7 @@ echo config file = %config% >> %buildLog%
 echo update log = %updateLog% >> %buildLog%
 echo build log = %buildLog% >> %buildLog%
 echo install log = %installLog% >> %buildLog%
+echo error log = %errorLog% >> %buildLog%
 echo git log = %gitLog% >> %buildLog%
 
 :: create temporary config file
@@ -329,7 +332,7 @@ exit /b
 
 :Git <command>
 (echo. & echo $ git %*) >> %gitLog%
-git %* >> %gitLog%
+git %* 1>> %gitLog% 2>> %errorLog%
 exit /b
 
 :GitStash <message> [<args>]
