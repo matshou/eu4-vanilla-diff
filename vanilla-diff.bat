@@ -194,20 +194,27 @@ echo Creating list of files on master branch...
 git ls-tree -r master --name-only > master.diff
 call jrepl "(\/)" "\" /f "master.diff" /o - >> %buildLog%
 
-echo Adding localisation overrides to list...
-
-call :Checkout master
-
 @copy NUL replace.diff > nul
+@copy NUL files.diff > nul
+
+:: copy and override localisation files
+call :copyLocalisation
+
+echo.
+for /F "usebackq tokens=*" %%a in (master.diff) do (
+	call :CopyFile %%a
+)
+echo. & echo Completed copying vanilla files!
+echo Operation log saved in 'update.log'
+exit /b
+
+:copyLocalisation
+call :Checkout master
+echo Adding localisation overrides to list...
 for /r . %%a in (localisation\replace\*) do (
 	echo localisation\%%~nxa >> master.diff
 	echo localisation\%%~nxa >> replace.diff
 )
-
-set fileCategory=null
-IF exist files.diff del files.diff >> %buildLog%
-@copy NUL files.diff > nul
-
 echo. & echo Copying override localisation files...
 for /F "usebackq tokens=*" %%a in (replace.diff) do (
 	call :CopyFile %%a
@@ -230,15 +237,7 @@ echo Recording changes to repository...
 call :Git commit -m "temp-localisation-replace"
 git rev-parse HEAD > %build_tmp%
 ( set /p masterHEAD= ) < %build_tmp%
-
 call :Checkout vanilla
-
-echo.
-for /F "usebackq tokens=*" %%a in (master.diff) do (
-	call :CopyFile %%a
-)
-echo. & echo Completed copying vanilla files!
-echo Operation log saved in 'update.log'
 exit /b
 
 :trimFiles
