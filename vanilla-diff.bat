@@ -33,7 +33,7 @@ IF not "%~nx0"=="%tmpScript%" (
 	RMDIR /s /q temp
 	echo remove shell dir >> %buildLog%
 	RMDIR /s /q shell
-	pause
+	REM pause
 	exit /b
 )
 
