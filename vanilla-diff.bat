@@ -386,20 +386,13 @@ exit /b
 :ReadConfig <entry> <value>
 FOR /F "tokens=1-2 delims==" %%I IN ("%*") DO (
 	set value=%%~J
-
-	IF "%%I"=="txtFiles" (
-		call :ParseConfigValue "%%J" value
+	:: parse list config entries
+	IF "!value!"=="%%J" (
+		set value=!value:,= !
 	)
 	set %%I=!value!
 	echo %%I = %%J >> %buildLog%
 )
-exit /b
-
-:ParseConfigValue
-set values=%~1
-call jrepl "," " " /s values > %build_tmp%
-( set /p values= ) < %build_tmp%
-set %2=%values%
 exit /b
 
 :GetSubstring <input> <replace> <regex> <rules> <output>
