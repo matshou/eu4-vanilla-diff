@@ -126,6 +126,11 @@ echo build log = %buildLog% >> %buildLog%
 echo install log = %installLog% >> %buildLog%
 echo git log = %gitLog% >> %buildLog%
 
+:: create temporary config file
+:: so it doesn't get deleted on checkout
+copy %config% temp\%config% > nul
+set config=temp\%config%
+
 :: stash local changes
 call :GitStash "wip" --keep-index
 
