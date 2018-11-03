@@ -143,8 +143,9 @@ set config=temp\%config%
 :: stash local changes
 call :GitStash "wip" --keep-index
 
-:: suppress CRLF warnings
+:: git CRLF configurations
 call :Git config --local core.safecrlf %safecrlf%
+call :Git config --local core.autocrlf %autocrlf%
 
 call :install
 echo Loading configuration values...
