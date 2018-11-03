@@ -47,9 +47,13 @@ echo.
 
 :welcome
 echo # Welcome to vanilla-diff!
-echo # --------------------------
-echo # This script will help you generate a readable log of mod changes
-echo # that override vanilla files, called a diff file.
+echo # ------------------------
+echo # This script is a small modding utility for Europa Universalis IV.
+echo # It will help you generate a readable log of mod changes that
+echo # override vanilla files, called a diff file.
+echo #
+echo # Visit project page on GitHub for more info:
+echo # %repoURL%
 echo #
 :help
 echo # Usage:
