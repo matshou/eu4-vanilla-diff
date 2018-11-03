@@ -61,6 +61,7 @@ echo #   ^<command^> [--^<option^>]
 echo #
 echo # Options:
 echo #   keep-files   - Skip repository cleanup
+echo #   skip-local   - Exclude localisation files
 echo #
 echo # Commands:
 echo #   generate   - Generate a new vanilla diff file.
@@ -198,8 +199,9 @@ call jrepl "(\/)" "\" /f "master.diff" /o - >> %buildLog%
 @copy NUL files.diff > nul
 
 :: copy and override localisation files
-call :copyLocalisation
-
+IF not "%argument%"=="-skip-local" (
+	call :copyLocalisation
+)
 echo.
 for /F "usebackq tokens=*" %%a in (master.diff) do (
 	call :CopyFile %%a
@@ -310,17 +312,19 @@ IF "%curHEAD%"=="%vanillaHEAD%" (
 ) else (
 	call :Error 4 %curHEAD% %vanillaHEAD%
 )
-call :Checkout master
-git rev-parse HEAD > %build_tmp%
-( set /p curHEAD= ) < %build_tmp%
-IF "%curHEAD%"=="%masterHEAD%" (
-	echo reset master HEAD >> %buildLog%
-	call :Git reset --keep HEAD~
+IF not "%argument%"=="-skip-local" (
+	call :Checkout master
+	git rev-parse HEAD > %build_tmp%
+	( set /p curHEAD= ) < %build_tmp%
+	IF "%curHEAD%"=="%masterHEAD%" (
+		echo reset master HEAD >> %buildLog%
+		call :Git reset --keep HEAD~
 
-) else (
-	call :Error 4 %currHEAD% %masterHEAD%
+	) else (
+		call :Error 4 %currHEAD% %masterHEAD%
+	)
+	call :Checkout vanilla
 )
-call :Checkout vanilla
 exit /b
 
 
