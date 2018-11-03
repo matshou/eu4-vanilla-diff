@@ -76,7 +76,7 @@ call :readInput %input%
 IF "%command%"=="" ( goto input)
 echo.
 IF "%command%"=="generate" ( goto run )
-IF "%command%"=="show" ( call :Show %option% )
+IF "%command%"=="show" ( call :Show %argument% )
 IF "%command%"=="help" ( goto help )
 IF "%command%"=="quit" ( exit /b )
 
@@ -92,7 +92,7 @@ goto input
 
 :readInput
 set command=%1
-set option=%2
+set argument=%2
 exit /b
 
 :run
@@ -100,7 +100,7 @@ call :copyFiles
 call :trimFiles
 call :createCommit
 call :writeDiff
-IF "%option%"=="-keep-files" (
+IF "%argument%"=="-keep-files" (
 	echo Skipping cleanup.
 ) else (
 	call :cleanRepo
