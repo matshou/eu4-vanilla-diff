@@ -1,3 +1,7 @@
+## About
+`vanilla-diff` is a small modding utility batch script for Europa Universalis IV. It will help you generate a readable log of mod changes that
+override vanilla files, called a diff file that can then be opened and viewed with any text editor.
+
 ## Install
 Create a new orphan branch called `vanilla` in your mod repo then pull from `eu4-vanilla-diff`.
 ```
