@@ -23,7 +23,8 @@ IF not "%~nx0"=="%tmpScript%" (
 	call %tmpScript%
 
 	@del %tmpScript%
-	IF "%stashed%"=="true" (
+	call :GetFileSize head.diff
+	IF !fileSize! gtr 0 (
 		(echo. & echo $ git stash pop) >> %gitLog%
 		git stash pop >> %gitLog%
 	)
@@ -112,7 +113,6 @@ call :GetNewTmp build
 
 set /a seed=%RANDOM% * 1000 / 32768 + 1
 set stash_id=%seed%
-set stashed=false
 
 :: create log files
 copy NUL %buildLog% > nul
@@ -126,21 +126,8 @@ echo build log = %buildLog% >> %buildLog%
 echo install log = %installLog% >> %buildLog%
 echo git log = %gitLog% >> %buildLog%
 
-git diff HEAD > %build_tmp%
-call :GetFileSize %build_tmp%
-IF %fileSize% gtr 0 (
-	echo Stashing changes in working directory...
-	rem add dependencies to index
-	rem :::::::::::::::::::::::::
-	call :Git add %config%
-	rem :::::::::::::::::::::::::
-	call :GitStash "wip" --keep-index
-	IF not ERRORLEVEL 1 (
-		set stashed=true
-	)
-	copy %build_tmp% head.diff > nul
-	echo stashed changed, see 'head.diff'. >> %buildLog%
-)
+:: stash local changes
+call :GitStash "wip" --keep-index
 
 :: suppress CRLF warnings
 call :Git config --local core.safecrlf %safecrlf%
@@ -333,14 +320,15 @@ exit /b
 
 :GitStash <message> [<args>]
 set /a stash_id=%stash_id%+1
-git diff HEAD > git.tmp
-call :GetFileSize git.tmp
+git diff HEAD > head.diff
+call :GetFileSize head.diff
 IF %fileSize% gtr 0 (
+	echo Stashing changes in working directory...
 	call :Git stash push %~2 -m "vanilla-diff %~1 %stash_id%"
+	echo stashed changed, see 'head.diff'. >> %buildLog%
 	git stash show >> %gitLog%
-	exit /b
 )
-exit /b 1
+exit /b
 
 :Checkout <branch>
 call :GetCurrentBranch old_branch
