@@ -203,7 +203,7 @@ IF exist files.diff del files.diff >> %buildLog%
 
 echo. & echo Copying override localisation files...
 for /F "usebackq tokens=*" %%a in (replace.diff) do (
-	call :CopyFile null %%~na%%~xa %%a
+	call :CopyFile %%a
 )
 echo Creating override shell script...
 for /r . %%a in (localisation\replace\*) do (
@@ -228,11 +228,7 @@ call :Checkout vanilla
 
 echo.
 for /F "usebackq tokens=*" %%a in (master.diff) do (
-	echo %%a > %build_tmp%
-	call jrepl "\\(.*(?:\\))?" " " /f "%build_tmp%" /o - >> %buildLog%
-	for /F "usebackq tokens=*" %%b in (%build_tmp%) do (
-		call :CopyFile %%b %%a
-	)
+	call :CopyFile %%a
 )
 echo. & echo Completed copying vanilla files!
 echo Operation log saved in 'update.log'
@@ -424,25 +420,26 @@ call :AppendToShellScript shCommand override.sh output
 exit /b
 
 :CopyFile <path>
-set fileDirName=%1
-set filename=%2
-set filePath=%3
-call set filePath=%%filePath:\%filename%=%%
-
-IF not "%fileCategory%"=="%1" (
-	IF not "%fileDirName%"=="%filename%" (
-		set fileCategory=%1
-		echo Copying "%1" files...
+set xpathx=%1
+set filename=%~nx1
+set filepath=!xpathx:\%~nx1=!
+IF not "%filepath%"=="%xpathx%" (
+	for /F "tokens=1 delims=\" %%b in ("%filepath%") do (
+		IF not "%fileCategory%"=="%%b" (
+			set fileCategory=%%b
+			echo Copying "%%b" files...
+		)
 	)
 )
-set src=%gamePath%\%filePath%
-set dest=%cd%\%filePath%
+set src=%gamePath%\%filepath%
+set dest=%cd%\%filepath%
+set fullpath=%src%\%filename%
 
-IF exist "%src%\%filename%" (
-	echo copy %3 >> %buildLog%
+IF exist "%fullpath%" (
+	echo copy %fullpath% >> %buildLog%
 	robocopy "%src%" "%dest%" %filename% /IT >> %updateLog%
 	:: Fill list of copied file paths
-	echo %3 >> files.diff
+	echo %1 >> files.diff
 )
 exit /b
 
