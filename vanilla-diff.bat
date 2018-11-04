@@ -521,9 +521,8 @@ exit /b
 
 :CTError
 echo. & echo Critical error occured, aborting operation!
-set _errLevel=%1
 REM *** Remove all calls from the current batch from the call stack
-:popStack
+:exitScript
 (
     (goto) 2>nul
     setlocal DisableDelayedExpansion
@@ -532,11 +531,10 @@ REM *** Remove all calls from the current batch from the call stack
     call set _caller=%%_caller::=%%
     if not defined _caller (
         REM callType = func
-        rem set _errLevel=%_errLevel%
-        goto :popStack
+        goto :exitScript
     )
     (goto) 2>nul
     endlocal
-    cmd /c "exit /b %_errLevel%"
+    cmd /c "exit /b
 )
 exit /b
