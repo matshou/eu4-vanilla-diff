@@ -24,10 +24,11 @@ IF not "%~nx0"=="%tmpScript%" (
 	call %tmpScript%
 
 	@del %tmpScript%
-	call :GetFileSize head.diff
-	IF !fileSize! gtr 0 (
-		(echo. & echo $ git stash pop) >> %gitLog%
-		git stash pop 1>> %gitLog% 2>> %errorLog%
+	for /f "usebackq" %%i in ('%stash_diff%') do (
+		IF %%~zi gtr 0 (
+			(echo. & echo $ git stash pop) >> %gitLog%
+			git stash pop 1>> %gitLog% 2>> %errorLog%
+		)
 	)
 	echo remove temp dir >> %buildLog%
 	RMDIR /s /q temp
@@ -340,7 +341,7 @@ exit /b
 
 :GetFileSize <file>
 set fileSize=0
-for /f %%i in ("%~1") do set fileSize=%%~zi
+for /f "usebackq" %%i in ('%~1') do set fileSize=%%~zi
 exit /b
 
 :Git <command>
