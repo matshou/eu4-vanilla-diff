@@ -21,7 +21,7 @@ set tmpScript=script.bat
 :: used when switching git branches
 IF not "%~nx0"=="%tmpScript%" (
 	@copy /b/v/y %~nx0 %tmpScript% > nul
-	call %tmpScript%
+	call %tmpScript% %*
 
 	@del %tmpScript%
 	for /f "usebackq" %%i in ('%stash_diff%') do (
@@ -44,8 +44,13 @@ REM pause
 REM exit/b
 
 call :init
-echo.
 
+:: script started with arguments
+IF not "%*"=="" (
+	set input=%*
+	goto readInput
+)
+echo.
 :welcome
 echo # Welcome to vanilla-diff!
 echo # ------------------------
@@ -70,27 +75,28 @@ echo #   update     - Update application from remote repo.
 echo #   show       - Open diff or log file in terminal.
 echo #   quit       - Stop script and return to terminal.
 echo #   help       - Print list of commands and options.
-:input
+:getInput
 echo.
 set "input="
 set /p input="$ "
+:readInput
 call :readInput %input%
-IF "%command%"=="" ( goto input)
+IF "%command%"=="" ( goto getInput)
+IF "%command%"=="quit" ( exit /b )
 echo.
 IF "%command%"=="generate" ( goto run )
 IF "%command%"=="show" ( call :Show %argument% )
 IF "%command%"=="help" ( goto help )
-IF "%command%"=="quit" ( exit /b )
 
 IF "%command%"=="update" (
 	echo Updating vanilla-diff...
 	call :Git pull !repoURL!
-	goto input
+	goto getInput
 )
 
 echo Error: unknown command '%command%'
 echo Call 'help' to show a list of usable commands.
-goto input
+goto getInput
 
 :readInput
 set command=%1
@@ -109,7 +115,9 @@ IF "%argument%"=="-keep-files" (
 )
 echo. & echo Finished generating diff file!
 echo See 'vanilla.diff'
-goto input
+
+IF not "%*"=="" goto :exitScript
+goto getInput
 
 :init
 echo. & echo Initializing application...
@@ -466,25 +474,25 @@ exit /b
 :Show <file>
 IF "%1"=="" (
 	call :Error 11
-	goto input
+	goto getInput
 )
 set showFileExt=.log .diff
 for %%a in (%showFileExt%) do (
 	IF "%~x1"=="%%a" ( goto show-read )
 )
 call :Error 10 %1
-goto input
+goto getInput
 :show-read
 IF not exist "%1" (
 	call :Error 9 %1
-	goto input
+	goto getInput
 )
 for /f "tokens=*" %%a in (%1) do (
 	IF "%%a"=="" (
 		echo.
 	) else ( echo %%a )
 )
-goto input
+goto getInput
 
 :Query <text> <output>
 set "a="
