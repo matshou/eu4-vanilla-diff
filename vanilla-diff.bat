@@ -3,11 +3,17 @@ setlocal enabledelayedexpansion
 
 :: define config files here
 set config=vanilla.ini
-set updateLog=update.log
-set buildLog=build.log
-set installLog=install.log
-set errorLog=error.log
-set gitLog=git.log
+set updateLog=log\update.log
+set buildLog=log\build.log
+set installLog=log\install.log
+set errorLog=log\error.log
+set gitLog=log\git.log
+
+set stash_diff=diff\head.diff
+set vanilla_diff="diff/vanilla.diff"
+set master_diff=diff\master.diff
+set replace_diff=diff\replace.diff
+set files_diff=diff\files.diff
 
 set fileSize=0
 set t1=0
@@ -114,16 +120,17 @@ IF "%argument%"=="-keep-files" (
 	call :cleanRepo
 )
 echo. & echo Finished generating diff file!
-echo See 'vanilla.diff'
+echo See '%vanilla_diff%'
 
-IF not "%*"=="" goto :exitScript
+IF not "%*"=="" call :exitScript
 goto getInput
 
 :init
 echo. & echo Initializing application...
-IF exist "error.log" del error.log
 IF NOT exist temp\ ( mkdir temp )
 IF NOT exist shell\ ( mkdir shell )
+IF NOT exist log\ ( mkdir log )
+IF NOT exist diff\ ( mkdir diff )
 
 call :GetNewTmp build
 
@@ -202,18 +209,18 @@ call :PrintHeader "Copy vanilla files:" 19 %buildLog%
 echo Preparing to copy files...
 
 echo Creating list of files on master branch...
-git ls-tree -r master --name-only > master.diff
-call jrepl "(\/)" "\" /f "master.diff" /o - >> %buildLog%
+git ls-tree -r master --name-only > %master_diff%
+call jrepl "(\/)" "\" /f "%master_diff%" /o - >> %buildLog%
 
-@copy NUL replace.diff > nul
-@copy NUL files.diff > nul
+@copy NUL %replace_diff% > nul
+@copy NUL %files_diff% > nul
 
 :: copy and override localisation files
 IF not "%argument%"=="-skip-local" (
 	call :copyLocalisation
 )
 echo.
-for /F "usebackq tokens=*" %%a in (master.diff) do (
+for /F "usebackq tokens=*" %%a in (%master_diff%) do (
 	call :CopyFile %%a
 )
 echo. & echo Completed copying vanilla files!
@@ -224,11 +231,11 @@ exit /b
 call :Checkout master
 echo Adding localisation overrides to list...
 for /r . %%a in (localisation\replace\*) do (
-	echo localisation\%%~nxa >> master.diff
-	echo localisation\%%~nxa >> replace.diff
+	echo localisation\%%~nxa >> %master_diff%
+	echo localisation\%%~nxa >> %replace_diff%
 )
 echo. & echo Copying override localisation files...
-for /F "usebackq tokens=*" %%a in (replace.diff) do (
+for /F "usebackq tokens=*" %%a in (%replace_diff%) do (
 	call :CopyFile %%a
 )
 echo Creating override shell script...
@@ -242,7 +249,7 @@ echo Applying overrides to localisation...
 call :RunShellScript override.sh
 
 echo Adding localisation changes to index...
-for /F "usebackq tokens=*" %%a in (replace.diff) do (
+for /F "usebackq tokens=*" %%a in (%replace_diff%) do (
 	call :Git add %%a
 )
 echo Recording changes to repository...
@@ -255,7 +262,7 @@ exit /b
 :trimFiles
 call :PrintHeader "Remove trailing space:" 22 %buildLog%
 echo. & echo Trimming trailing space...
-for /F "usebackq tokens=*" %%a in (files.diff) do (
+for /F "usebackq tokens=*" %%a in (%files_diff%) do (
 	call :trimFile %%a
 )
 exit /b
@@ -308,7 +315,7 @@ for /F "usebackq tokens=*" %%a in (.diffignore) do (
 	)
 )
 set "shCommand=git diff --diff-filter=M vanilla master %exclude%"
-call :RunBash shCommand diff.sh vanilla.diff
+call :RunBash shCommand diff.sh %vanilla_diff%
 exit /b
 
 :cleanRepo
@@ -359,12 +366,12 @@ exit /b
 
 :GitStash <message> [<args>]
 set /a stash_id=%stash_id%+1
-git diff HEAD > head.diff
-call :GetFileSize head.diff
+git diff HEAD > %stash_diff%
+call :GetFileSize %stash_diff%
 IF %fileSize% gtr 0 (
 	echo Stashing changes in working directory...
 	call :Git stash push %~2 -m "vanilla-diff %~1 %stash_id%"
-	echo stashed changed, see 'head.diff'. >> %buildLog%
+	echo stashed changed, see '%stash_diff%'. >> %buildLog%
 	git stash show >> %gitLog%
 )
 exit /b
@@ -467,7 +474,7 @@ IF exist "%fullpath%" (
 	echo copy %fullpath% >> %buildLog%
 	robocopy "%src%" "%dest%" %filename% /IT >> %updateLog%
 	:: Fill list of copied file paths
-	echo %1 >> files.diff
+	echo %1 >> %files_diff%
 )
 exit /b
 
